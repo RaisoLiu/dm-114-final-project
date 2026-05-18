@@ -2,6 +2,8 @@
 
 This document is the **entry point for team members writing the report**. It walks the methods we tried, what each taught us, and where the ceiling currently sits.
 
+> **濃縮版**：直接看 **[`EXPERIMENTS_AND_BLOCKERS.md`](EXPERIMENTS_AND_BLOCKERS.md)** — 一頁包含 (1) 13 個實驗清單表、(2) 12 個困境清單表、(3) 實驗×困境關聯矩陣、(4) 4 點核心結論。給寫報告的隊友直接取用。
+
 The chronological strategy reports are in `reports/`; the method-level failure lessons are in `docs/memory/`; the iteration plans are in `docs/plans/`. This file ties them together.
 
 ## Final scores (as of 2026-05-18)
@@ -88,11 +90,12 @@ The only remaining angles (Plan v8) are signals genuinely outside the existing f
 
 For the methodology section of your report:
 
-1. **`README.md`** — project setup, pipeline overview.
-2. **This file (`docs/JOURNEY.md`)** — strategy timeline + final results.
-3. **`reports/strategy_2026-05-11_redo.md`** — most comprehensive strategy doc, written after Plan v3.
-4. **`docs/memory/`** — short failure-mode notes; each is a single distilled lesson.
-5. **`docs/plans/plan_v8_external_training.md`** — what's planned next.
+1. **`docs/EXPERIMENTS_AND_BLOCKERS.md`** ⭐ — 一頁濃縮表（實驗 + 困境 + 關聯矩陣 + 結論），直接可貼進報告。
+2. **`README.md`** — project setup, pipeline overview.
+3. **This file (`docs/JOURNEY.md`)** — strategy timeline + final results.
+4. **`reports/strategy_2026-05-11_redo.md`** — most comprehensive strategy doc, written after Plan v3.
+5. **`docs/memory/`** — short failure-mode notes; each is a single distilled lesson.
+6. **`docs/plans/plan_v8_external_training.md`** — what's planned next.
 
 For the methods description:
 - `src/drought/features.py` — the 1071-feature pipeline (91-day weather windows, DOY encodings, per-region rolling stats).

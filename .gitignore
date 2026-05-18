@@ -1,0 +1,42 @@
+# Data — Kaggle competition data (excluded per Kaggle TOS + large ~1.5GB)
+data/*.csv
+data/*.zip
+
+# Model binary artifacts (regenerable from scripts/)
+models/*.joblib
+
+# Submission CSVs (predictions, not source; manifest in docs/JOURNEY.md instead)
+submissions/*.csv
+
+# Report data artifacts — only *.md kept; numeric artifacts regenerable
+reports/*.json
+reports/*.parquet
+reports/eda_summary.md
+reports/*.csv
+
+# Local logs (not artifact-worthy)
+logs/
+
+# Credentials — never commit
+.kaggle/
+*.env
+credentials.json
+**/access_token
+
+# Python build / virtualenv
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+.python-version
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Claude Code session artifacts
+.claude/

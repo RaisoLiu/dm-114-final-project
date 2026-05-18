@@ -1,0 +1,45 @@
+Mode: --dry-run
+Start at queue item: 1
+Started at: 2026-05-09T22:21:14+08:00
+Log: reports/submit_three_20260510_0810_dry-run_20260509_222114.log
+Validating queued submissions...
+Validated submissions/submission_post_publicbest_hsharp_opt_mkeep.csv
+Rows: 2,248
+Prediction columns: ['pred_week1', 'pred_week2', 'pred_week3', 'pred_week4', 'pred_week5']
+Prediction range: 0.043417 to 5.000000
+Prediction mean: 1.233909
+Validated submissions/submission_post_publicbest_hybrid_qsharp_opt_mkeep.csv
+Rows: 2,248
+Prediction columns: ['pred_week1', 'pred_week2', 'pred_week3', 'pred_week4', 'pred_week5']
+Prediction range: 0.134191 to 5.000000
+Prediction mean: 1.233909
+Validated submissions/submission_post_publicbest_hqmap_opt_mkeep.csv
+Rows: 2,248
+Prediction columns: ['pred_week1', 'pred_week2', 'pred_week3', 'pred_week4', 'pred_week5']
+Prediction range: 0.069786 to 5.000000
+Prediction mean: 1.233909
+
+Submission checksums:
+d54d71c3d8f8371897cb98475fa73eba370c338fe42b6ef9ac5ecf332a9ecc85  submissions/submission_post_publicbest_hsharp_opt_mkeep.csv
+999e4d6c2599cb86510c60aef64ec9cfae6192a9f3a91a1cad5267a9de770c39  submissions/submission_post_publicbest_hybrid_qsharp_opt_mkeep.csv
+78fdca96317dbf32fc2059be34aed7792e758822386f185533e10a821045fa7e  submissions/submission_post_publicbest_hqmap_opt_mkeep.csv
+
+Recent Kaggle submissions:
+     ref  fileName                                                   date                        description                                              status                     publicScore  privateScore  
+--------  ---------------------------------------------------------  --------------------------  -------------------------------------------------------  -------------------------  -----------  ------------  
+52468548  submission_blackout91_blend_valid1_fast64_gpu_shift35.csv  2026-05-09 01:35:09.807000  blackout91 latest-anchor blend shift35                   SubmissionStatus.COMPLETE  0.8921                     
+52468533  submission_blackout91_blend_cal02_fast64_gpu_shift35.csv   2026-05-09 01:34:02.630000  blackout91 blend calibrated shift35                      SubmissionStatus.COMPLETE  0.8773                     
+52468359  submission_blackout91_blend_cal02_fast64_gpu_shift25.csv   2026-05-09 01:23:40.803000  blackout91 blend calibrated shift25                      SubmissionStatus.COMPLETE  0.8804                     
+52454902  submission_gap_zero_fast64.csv                             2026-05-08 13:28:22.093000  zero-gap GPU LightGBM local validation MAE 0.21249       SubmissionStatus.COMPLETE  1.0839                     
+52450985  submission_last_train_score.csv                            2026-05-08 10:42:45.813000  last observed train score baseline validation MAE 0.237  SubmissionStatus.COMPLETE  1.0884                     
+52450971  submission_global_median.csv                               2026-05-08 10:41:53.847000  global median baseline validation MAE 0.605              SubmissionStatus.COMPLETE  1.2088                     
+
+Submission quota preflight:
+Completed/submitted rows visible in last 24h if Kaggle timestamps are UTC: 3
+  2026-05-09 01:35:09.807000  52468548  submission_blackout91_blend_valid1_fast64_gpu_shift35.csv  2026-05-09 01:35:09.807000  blackout91 latest-ancho
+  2026-05-09 01:34:02.630000  52468533  submission_blackout91_blend_cal02_fast64_gpu_shift35.csv   2026-05-09 01:34:02.630000  blackout91 blend calibr
+  2026-05-09 01:23:40.803000  52468359  submission_blackout91_blend_cal02_fast64_gpu_shift25.csv   2026-05-09 01:23:40.803000  blackout91 blend calibr
+WARNING: If the competition uses a rolling 24h limit of 3 submissions, quota may not be available yet.
+
+Dry run complete. To submit these three files, run:
+  bash scripts/submit_three_20260510_0810.sh --execute

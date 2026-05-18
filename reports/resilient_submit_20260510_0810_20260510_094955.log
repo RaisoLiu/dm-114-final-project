@@ -1,0 +1,69 @@
+Mode: --execute
+Manifest: reports/submit_manifest_20260510_0810.json
+verified 1: submissions/submission_post_publicbest_hsharp_opt_mkeep.csv  sha256=d54d71c3d8f8371897cb98475fa73eba370c338fe42b6ef9ac5ecf332a9ecc85
+verified 2: submissions/submission_post_publicbest_hybrid_qsharp_opt_mkeep.csv  sha256=999e4d6c2599cb86510c60aef64ec9cfae6192a9f3a91a1cad5267a9de770c39
+verified 3: submissions/submission_post_publicbest_qmap100.csv  sha256=0ab358610d1cdb30adbda5eb4a852b676cb16ec86fb27b0820a7a6cd6eee2a15
+Manifest verified: reports/submit_manifest_20260510_0810.json
+Mode: --execute
+Target time: 2026-05-10T08:10:00+08:00 (Asia/Taipei)
+Target time has already passed; executing upload script now.
+Mode: --execute
+Start at queue item: 1
+Started at: 2026-05-10T09:49:55+08:00
+Log: reports/submit_three_20260510_0810_execute_20260510_094955.log
+Validating queued submissions...
+Validated submissions/submission_post_publicbest_hsharp_opt_mkeep.csv
+Rows: 2,248
+Prediction columns: ['pred_week1', 'pred_week2', 'pred_week3', 'pred_week4', 'pred_week5']
+Prediction range: 0.043417 to 5.000000
+Prediction mean: 1.233909
+Validated submissions/submission_post_publicbest_hybrid_qsharp_opt_mkeep.csv
+Rows: 2,248
+Prediction columns: ['pred_week1', 'pred_week2', 'pred_week3', 'pred_week4', 'pred_week5']
+Prediction range: 0.134191 to 5.000000
+Prediction mean: 1.233909
+Validated submissions/submission_post_publicbest_qmap100.csv
+Rows: 2,248
+Prediction columns: ['pred_week1', 'pred_week2', 'pred_week3', 'pred_week4', 'pred_week5']
+Prediction range: 0.000000 to 5.000000
+Prediction mean: 1.208808
+
+Submission checksums:
+d54d71c3d8f8371897cb98475fa73eba370c338fe42b6ef9ac5ecf332a9ecc85  submissions/submission_post_publicbest_hsharp_opt_mkeep.csv
+999e4d6c2599cb86510c60aef64ec9cfae6192a9f3a91a1cad5267a9de770c39  submissions/submission_post_publicbest_hybrid_qsharp_opt_mkeep.csv
+0ab358610d1cdb30adbda5eb4a852b676cb16ec86fb27b0820a7a6cd6eee2a15  submissions/submission_post_publicbest_qmap100.csv
+
+Recent Kaggle submissions:
+     ref  fileName                                                   date                        description                                              status                     publicScore  privateScore  
+--------  ---------------------------------------------------------  --------------------------  -------------------------------------------------------  -------------------------  -----------  ------------  
+52468548  submission_blackout91_blend_valid1_fast64_gpu_shift35.csv  2026-05-09 01:35:09.807000  blackout91 latest-anchor blend shift35                   SubmissionStatus.COMPLETE  0.8921                     
+52468533  submission_blackout91_blend_cal02_fast64_gpu_shift35.csv   2026-05-09 01:34:02.630000  blackout91 blend calibrated shift35                      SubmissionStatus.COMPLETE  0.8773                     
+52468359  submission_blackout91_blend_cal02_fast64_gpu_shift25.csv   2026-05-09 01:23:40.803000  blackout91 blend calibrated shift25                      SubmissionStatus.COMPLETE  0.8804                     
+52454902  submission_gap_zero_fast64.csv                             2026-05-08 13:28:22.093000  zero-gap GPU LightGBM local validation MAE 0.21249       SubmissionStatus.COMPLETE  1.0839                     
+52450985  submission_last_train_score.csv                            2026-05-08 10:42:45.813000  last observed train score baseline validation MAE 0.237  SubmissionStatus.COMPLETE  1.0884                     
+52450971  submission_global_median.csv                               2026-05-08 10:41:53.847000  global median baseline validation MAE 0.605              SubmissionStatus.COMPLETE  1.2088                     
+
+Submission quota preflight:
+Completed/submitted rows visible in last 24h if Kaggle timestamps are UTC: 0
+
+Submitting queued files...
+Validated submissions/submission_post_publicbest_hsharp_opt_mkeep.csv
+Rows: 2,248
+Prediction columns: ['pred_week1', 'pred_week2', 'pred_week3', 'pred_week4', 'pred_week5']
+Prediction range: 0.043417 to 5.000000
+Prediction mean: 1.233909
+  0%|          | 0.00/220k [00:00<?, ?B/s]100%|██████████| 220k/220k [00:01<00:00, 175kB/s]
+Successfully submitted to Data Mining Final Project (2026 Spring)Kaggle command:
+/home/raiso/DM_114_FinalProject/.venv/bin/kaggle competitions submit -c data-mining-2026-final-project -f submissions/submission_post_publicbest_hsharp_opt_mkeep.csv -m 0810 upload 1 public-best horizon-sharpen keepmean
+
+Polling Kaggle submission status...
+Poll attempt 1 at 2026-05-10T09:50:03+08:00
+     ref  fileName                                                   date                        description                                              status                     publicScore  privateScore  
+--------  ---------------------------------------------------------  --------------------------  -------------------------------------------------------  -------------------------  -----------  ------------  
+52499764  submission_post_publicbest_hsharp_opt_mkeep.csv            2026-05-10 01:50:01.857000  0810 upload 1 public-best horizon-sharpen keepmean       SubmissionStatus.PENDING                              
+52468548  submission_blackout91_blend_valid1_fast64_gpu_shift35.csv  2026-05-09 01:35:09.807000  blackout91 latest-anchor blend shift35                   SubmissionStatus.COMPLETE  0.8921                     
+52468533  submission_blackout91_blend_cal02_fast64_gpu_shift35.csv   2026-05-09 01:34:02.630000  blackout91 blend calibrated shift35                      SubmissionStatus.COMPLETE  0.8773                     
+52468359  submission_blackout91_blend_cal02_fast64_gpu_shift25.csv   2026-05-09 01:23:40.803000  blackout91 blend calibrated shift25                      SubmissionStatus.COMPLETE  0.8804                     
+52454902  submission_gap_zero_fast64.csv                             2026-05-08 13:28:22.093000  zero-gap GPU LightGBM local validation MAE 0.21249       SubmissionStatus.COMPLETE  1.0839                     
+52450985  submission_last_train_score.csv                            2026-05-08 10:42:45.813000  last observed train score baseline validation MAE 0.237  SubmissionStatus.COMPLETE  1.0884                     
+52450971  submission_global_median.csv                               2026-05-08 10:41:53.847000  global median baseline validation MAE 0.605              SubmissionStatus.COMPLETE  1.2088                     

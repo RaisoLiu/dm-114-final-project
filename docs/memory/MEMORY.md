@@ -1,0 +1,12 @@
+- [User role and competition context](user_role.md) — CS PhD at top US university, current Kaggle DM 114 final project
+- [Project status after Round 2 (2026-05-11)](project_status_20260510.md) — team public best stays at 0.8593 (pb30); Round 2 with latent_nowcast scored 0.8609 (+0.0016 worse). Same-family plateau ~0.86
+- [Strategy preference](feedback_strategy.md) — trusts senior-researcher framing; allows bounded experimentation but demands honest expected-value reasoning
+- [Public/validation slice mismatch](project_validation_slices.md) — old slice (deltas 0,365) target mean 0.54 vs public 1.21; high-severity plateau is at deltas {721-756}, NOT 1460/1825 (synthetic year is multi-year periodic)
+- [MAD-vs-public slope](project_mad_slope.md) — empirical: ~+0.23 public MAE per unit MAD vs public-best, derived from 3 failed uploads on 2026-05-10
+- [Convex blends vs transforms](feedback_blend_vs_transform.md) — the +0.23/unit slope is an upper bound for transforms; convex blends with public-best can move closer to truth and the slope effectively goes negative
+- [Stacker OOF doesn't transfer to public](feedback_stacker_overfit.md) — 9-leg MLP stacker with val 0.310 scored 0.8688 on public (worse than pb30 0.8593); GroupKFold(region) overfits to validation slice in DM 114
+- [Deep CNN train→test distribution shift](feedback_deep_test_distribution_shift.md) — first proper GPU CNN val 0.357 but test H1 saturates at 5.0 for 71% of regions; cutoff_age OOD is suspect
+- [Transformer + bounded-sigmoid + L1 collapse](feedback_trans_bounded_sigmoid_collapse.md) — refit-all phase collapses trans outputs to 0 in DM 114; CNN/LSTM with same wrapper work fine
+- [Deep 10% blend Kaggle-confirmed worse](feedback_deep_blend_kaggle_confirmed.md) — 6-leg deep ensemble 10% blend with ext150 scored 0.8767 vs ext150's 0.8534, deep errors positively correlate with ext150; deep family closed for DM 114 without retraining
+- [DOY blend family Kaggle-confirmed worse](feedback_doy_blend_failed.md) — w08 (MAD 0.065) scored 0.8848 → slope +0.48 vs ext150; DOY-blend family closed for DM 114, need ρ<0 not ρ≈0.31
+- [Plan v7 3-upload retro 2026-05-18](feedback_plan_v7_3upload_retro.md) — DOY/H2-shrinkage/v6-3leg all scored 0.88-0.89 (slopes +0.42 to +0.56); ext150 0.8534 ceiling confirmed across 3 distinct families; KR1+KR2 missed

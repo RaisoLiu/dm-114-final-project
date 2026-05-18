@@ -1,0 +1,10 @@
+Mode: --dry-run
+Start at queue item: 2
+Started at: 2026-05-09T22:06:03+08:00
+Log: reports/submit_three_20260510_0810_dry-run_20260509_220603.log
+Validating queued submissions...
+Validated submissions/submission_post_publicbest_hsharp_opt_mkeep.csv
+Rows: 2,248
+Prediction columns: ['pred_week1', 'pred_week2', 'pred_week3', 'pred_week4', 'pred_week5']
+Prediction range: 0.043417 to 5.000000
+Prediction mean: 1.233909

@@ -261,3 +261,19 @@ Scope of each iteration is set by the approved plan at `~/.claude/plans/system-i
 - 🔴 GitHub repo `https://github.com/RaisoLiu/dm-114-final-project` needs to be created public + remote commits (4c37fb8 + dd961f3 + 4f12dcd + 0c9cf7f + this iter7 commit) pushed.
 - 🔴 Kaggle final-selected submissions: confirm 0.7628 (aggressive) + 0.7952 (no-affine sibling) are the two auto-picked. Kaggle display name `Team 3` already confirmed (iter6).
 - ⚠️ ~80 experiment scripts referenced by the report still untracked on remote git tree.
+
+---
+
+## Iteration 8 — 2026-05-26  (English names + Kaggle two-submission confirmation)
+
+### What changed
+- **Author block + Author Contributions**: switched from Chinese (iter7) to romanized English per user preference: Yu-Shun Liu (413551030), Tung-Hao Chang (413551038), Kuan-Fu Chen (414551017). xeCJK package removed from preamble (no longer needed).
+- **Threats (iv)**: tightened private-LB sibling sentence from "If Kaggle's automatic two-submission selection allows it..." to a confirmed statement after user verified the two Kaggle-selected submissions are the aggressive 0.7628 and the no-affine 0.7952 sibling.
+- iter8 PDF snapshot: `reports/DM_project_Group_3_iter8.pdf` (SHA `c2284558...`).
+- `make check` ✓, `make verify-submission` ✓ (max abs diff 4.4e-16), 8 pages A4.
+
+### Outstanding human-only blockers (further reduced)
+- 🔴 GitHub repo `https://github.com/RaisoLiu/dm-114-final-project` needs to be created public + remote commits pushed (iter4 dd961f3, iter5 4f12dcd, iter6 0c9cf7f, iter7 1a61f8e, this iter8 commit).
+- ✅ Kaggle Display Name = `Team 3` confirmed (iter6 screenshot evidence).
+- ✅ Kaggle two final-selected submissions confirmed by user as 0.7628 + 0.7952.
+- ⚠️ ~80 experiment scripts referenced by the report still untracked on remote git tree.

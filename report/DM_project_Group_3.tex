@@ -11,8 +11,6 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{placeins}
-\usepackage{xeCJK}
-\setCJKmainfont{Noto Serif CJK TC}
 
 \begin{document}
 \raggedbottom
@@ -20,7 +18,7 @@
 \title{Seasonal-Lag and Multi-Track Ensembling for Drought Severity Forecasting (DM~114 Kaggle)}
 
 \author{
-\IEEEauthorblockN{Team 3 \quad 劉宇舜 (413551030) \quad 張東浩 (413551038) \quad 陳冠甫 (414551017)}
+\IEEEauthorblockN{Team 3 --- Yu-Shun Liu (413551030), Tung-Hao Chang (413551038), Kuan-Fu Chen (414551017)}
 \IEEEauthorblockA{
 Data Mining, Spring 2026\\
 NYCU\\
@@ -294,7 +292,7 @@ We list four threats and the evidence that bounds each.
 
 \emph{(iii) Cross-family residual diversity (iter4 update).} The iter4 recomputation supersedes the earlier $\rho = 0.107 \pm 0.027$ figure from \texttt{reports/data\_characteristics\_v1.md}: the regenerated and row-aligned OOF predictions for the lag-2215 leg and the SSL Transformer now allow a direct, bootstrap-CI bounded per-region Pearson computation (Section~\ref{sec:ortho}). The new values are $\rho{=}0.51$ (lag-2215), $0.54$ (CNN), $0.33$ (SSL). These are \emph{lower-correlated} rather than orthogonal; SSL is the materially lowest. The lower SSL value most plausibly explains the SSL leg's positive contribution in Table~\ref{tab:t5}; lag-2215 contributes primarily through label-distribution coverage rather than residual independence.
 
-\emph{(iv) Public/private regime shift.} The 0.7628 result was achieved by tuning on public-test-like CV folds (high-severity phase, target mean $\approx 1.21$). The training menu's convex weights are $A{=}0.20$ (GBDT anchor) $+\, B{=}0.45$ (deep CNN+SSL) $+\, C{=}0.25$ (lag) $+\, D{=}0.10$ (deep variants); the lag component is therefore only $25\%$ of the blend, and if it attenuates on a private slice landing in a different phase of the 6-year cycle the remaining $75\%$ from weather-driven components ($A{+}B{+}D$) still covers the prediction. We do not state a numeric private-LB prediction. Direct evidence that the final affine-and-clip step is a \emph{public-slice calibration} rather than a general-purpose improvement comes from Table~\ref{tab:t5}: the full blend without affine/clip (row 8) has OOF MAE $0.5325$, while the affine-and-clip variant (row 9) has OOF MAE $0.5766$ --- worse on the OOF tensor --- yet wins on public ($0.7628$). The step trades OOF accuracy for proximity to the public severity plateau and is therefore a competition-calibration step with explicit private-LB risk. If Kaggle's automatic two-submission selection allows it, the no-affine 7-way row of Table~\ref{tab:t4} (public MAE $0.7952$) is the natural private-LB-conservative sibling to the 0.7628 final.
+\emph{(iv) Public/private regime shift.} The 0.7628 result was achieved by tuning on public-test-like CV folds (high-severity phase, target mean $\approx 1.21$). The training menu's convex weights are $A{=}0.20$ (GBDT anchor) $+\, B{=}0.45$ (deep CNN+SSL) $+\, C{=}0.25$ (lag) $+\, D{=}0.10$ (deep variants); the lag component is therefore only $25\%$ of the blend, and if it attenuates on a private slice landing in a different phase of the 6-year cycle the remaining $75\%$ from weather-driven components ($A{+}B{+}D$) still covers the prediction. We do not state a numeric private-LB prediction. Direct evidence that the final affine-and-clip step is a \emph{public-slice calibration} rather than a general-purpose improvement comes from Table~\ref{tab:t5}: the full blend without affine/clip (row 8) has OOF MAE $0.5325$, while the affine-and-clip variant (row 9) has OOF MAE $0.5766$ --- worse on the OOF tensor --- yet wins on public ($0.7628$). The step trades OOF accuracy for proximity to the public severity plateau and is therefore a competition-calibration step with explicit private-LB risk. The two final Kaggle-selected submissions for private-leaderboard evaluation are accordingly the aggressive $0.7628$ affine-and-clip artefact and the no-affine 7-way row of Table~\ref{tab:t4} (public MAE $0.7952$) as a private-LB-conservative sibling.
 
 \begin{figure*}[t]
 \centering
@@ -360,7 +358,7 @@ PYTHONPATH=src python \
 \clearpage
 
 \noindent\textbf{Author Contributions.}
-Team 3 (DM 114, Spring 2026) members: 劉宇舜 (413551030), 張東浩 (413551038), 陳冠甫 (414551017). Specific contributions are recorded in the GitHub repository's contribution log; the team collectively assumes responsibility for the design, the reported numbers, and the reproducibility of the artefact described above. The report itself was assembled iteratively from internal experiment logs (\path{docs/JOURNEY.md}, \path{reports/v18_morning_report.md}) and the artefact ledger (\path{reports/_local_eval_gate_report.csv}, \path{reports/oof_tensor.csv}); statistical claims were audited by leave-one-out cross-validation and bootstrap resampling against those artefacts before inclusion.
+Team 3 (DM 114, Spring 2026) members: Yu-Shun Liu (413551030), Tung-Hao Chang (413551038), Kuan-Fu Chen (414551017). Specific contributions are recorded in the GitHub repository's contribution log; the team collectively assumes responsibility for the design, the reported numbers, and the reproducibility of the artefact described above. The report itself was assembled iteratively from internal experiment logs (\path{docs/JOURNEY.md}, \path{reports/v18_morning_report.md}) and the artefact ledger (\path{reports/_local_eval_gate_report.csv}, \path{reports/oof_tensor.csv}); statistical claims were audited by leave-one-out cross-validation and bootstrap resampling against those artefacts before inclusion.
 
 \bibliographystyle{IEEEtran}
 \begin{thebibliography}{00}

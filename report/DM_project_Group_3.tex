@@ -22,14 +22,14 @@
 \IEEEauthorblockA{
 Data Mining, Spring 2026\\
 NYCU\\
-\url{https://github.com/RaisoLiu/dm-114-finalproject}
+\url{https://github.com/RaisoLiu/dm-114-final-project}
 }
 }
 
 \maketitle
 
 \begin{abstract}
-This paper presents the reported final solution of \textbf{Team 3} for the DM~114 (Spring 2026) Final Project Kaggle competition: predicting five future weekly drought severity scores (integer $0$--$5$) from 91 days of regional meteorological history. The Kaggle metric is the mean absolute error (MAE), and the public repository is \url{https://github.com/RaisoLiu/dm-114-finalproject}.
+This paper presents the reported final solution of \textbf{Team 3} for the DM~114 (Spring 2026) Final Project Kaggle competition: predicting five future weekly drought severity scores (integer $0$--$5$) from 91 days of regional meteorological history. The Kaggle metric is the mean absolute error (MAE), and the public repository is \url{https://github.com/RaisoLiu/dm-114-final-project}.
 
 The submission blends a six-leg gradient-boosted decision tree (GBDT) anchor over two feature families (b91, pl), an autoregressive seasonal-lag lookup at a $\approx$6-year period (2215 d), a weather-only dilated 1-D CNN, and an SSL-pretrained Transformer; weights ($A{=}0.20$, $B{=}0.45$, $C{=}0.25$, $D{=}0.10$) come from a single training menu and are followed by a public-slice affine-and-clip calibration. The selected submission achieves a public-leaderboard MAE of \textbf{0.7628}, a 10.6\% relative reduction over the prior team ceiling of $0.8534$. Section~\ref{sec:ortho} reports the iter4 recomputed per-region residual correlations of each non-GBDT leg with the GBDT anchor (lag-2215: $\rho{=}0.51$ with 95\% CI $[0.485, 0.533]$; CNN: $\rho{=}0.54$; SSL: $\rho{=}0.33$, lowest), and Table~\ref{tab:t5} is the controlled OOF-aligned 9-row ablation that decomposes the method components. The artefact is regenerated as a cached re-blend by \texttt{make phd-below075}, byte-verified against the archived CSV by \texttt{make verify-submission}; the cross-leg correlations and the 9-row ablation are reproduced by \texttt{make ablation}.
 \end{abstract}

@@ -72,7 +72,7 @@ check:
 	@pdftotext $(PDF) - | grep -q "Team 3" && echo "  - Contains 'Team 3'"
 	@pdftotext $(PDF) - | grep -q "0.7628" && echo "  - Contains final score 0.7628"
 	@pdftotext $(PDF) - | grep -q "below075_20260522.csv" && echo "  - Contains final submission filename"
-	@pdftotext $(PDF) - | grep -q "github.com/RaisoLiu/dm-114-finalproject" && echo "  - Contains canonical GitHub link"
+	@pdftotext $(PDF) - | grep -q "github.com/RaisoLiu/dm-114-final-project" && echo "  - Contains canonical GitHub link"
 	@! pdftotext $(PDF) - | grep -q "dm-114-final-project-claude" || (echo "Old GitHub URL still present"; exit 1)
 	@! pdftotext $(PDF) - | grep -qi "legitimate" || (echo "Integrity-sensitive word 'legitimate' still present"; exit 1)
 	@! pdftotext $(PDF) - | grep -q "region-resampled" || (echo "Incorrect bootstrap wording still present"; exit 1)

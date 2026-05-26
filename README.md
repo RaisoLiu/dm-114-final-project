@@ -5,7 +5,7 @@ This repository contains a reproducible Kaggle pipeline for the course final pro
 Public repository URL used in the final report:
 
 ```text
-https://github.com/RaisoLiu/dm-114-finalproject
+https://github.com/RaisoLiu/dm-114-final-project
 ```
 
 ## Data
@@ -239,8 +239,8 @@ Several caches under `cache/` (Track 3 CNN and Track 1 SSL prediction caches; â‰
 For a TA verifying that the report, code, and Kaggle result are consistent:
 
 ```bash
-git clone https://github.com/RaisoLiu/dm-114-finalproject.git
-cd dm-114-finalproject
+git clone https://github.com/RaisoLiu/dm-114-final-project.git
+cd dm-114-final-project
 
 # 1. Python environment
 python3 -m venv .venv

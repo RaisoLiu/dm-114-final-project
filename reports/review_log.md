@@ -214,3 +214,24 @@ Scope of each iteration is set by the approved plan at `~/.claude/plans/system-i
 - 🔴 Kaggle Display Name must be exactly `Team 3`.
 - 🔴 Verify Kaggle final-selected submissions: ideally `submission_phd_below075_20260522.csv` (0.7628) + the no-affine 0.7952 sibling for a public-aggressive/private-conservative pair.
 - ⚠️  ~80 experiment scripts referenced by the report still untracked on remote git tree (see iter4 entry for the list of critical ones).
+
+---
+
+## Iteration 6 — 2026-05-26  (user-triggered: GitHub URL change + Team 3 evidence captured)
+
+### What changed
+- User confirmed Kaggle Team display name is exactly `Team 3` (screenshot saved at `review/evidence/kaggle_team3_leaderboard_20260526.png`: rank #1, 0.7628 public, 38 entries, 3 members, `Team 3` literal display name). One of three previously-flagged human-only blockers cleared.
+- User finalised the GitHub repository slug as `https://github.com/RaisoLiu/dm-114-final-project` (with hyphens between "final" and "project"), replacing the no-hyphen `dm-114-finalproject` URL used through iter5.
+
+### Edits
+- `report/DM_project_Group_3.tex`: 2 \url{...} occurrences updated (author block + abstract).
+- `README.md`: 3 occurrences updated (canonical URL block + git clone command + cd target).
+- `report/Makefile`: `make check` URL grep updated; added a defensive regex rejecting the pre-iter6 no-hyphen URL so a regression would fail loudly.
+- iter6 PDF snapshot: `reports/DM_project_Group_3_iter6.pdf` (SHA `b72da14c...`).
+- `make check` ✓; `make verify-submission` ✓ (max abs diff 4.4e-16).
+
+### Outstanding human-only blockers (now reduced)
+- 🔴 GitHub repo `https://github.com/RaisoLiu/dm-114-final-project` (new URL): still needs to be created public and the three remote commits (4c37fb8 + dd961f3 + 4f12dcd + this iter6 commit) pushed.
+- ✅ Kaggle Display Name = `Team 3` — confirmed via screenshot evidence.
+- 🔴 Kaggle final-selected submissions: verify the two automatic picks are the 0.7628 (aggressive) and 0.7952 (no-affine, private-conservative) pair.
+- ⚠️  ~80 experiment scripts referenced by the report still untracked on remote git tree.

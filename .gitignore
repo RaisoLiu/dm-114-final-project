@@ -31,6 +31,7 @@ __pycache__/
 .venv/
 venv/
 .python-version
+.tools/
 
 # IDE / editor
 .vscode/
@@ -40,3 +41,4 @@ venv/
 
 # Claude Code session artifacts
 .claude/
+.gstack/

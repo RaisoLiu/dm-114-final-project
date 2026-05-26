@@ -2,6 +2,12 @@
 
 This repository contains a reproducible Kaggle pipeline for the course final project. The task is to use 91 days of meteorological data for each region to predict drought severity scores for the next five weeks. The Kaggle metric is MAE, so lower is better.
 
+Public repository URL used in the final report:
+
+```text
+https://github.com/RaisoLiu/dm-114-finalproject
+```
+
 ## Data
 
 Download the competition files from Kaggle and place them here:
@@ -166,6 +172,40 @@ The pipeline follows the assignment constraints:
 
 Feature groups include rolling weather statistics over 7, 14, 28, 56, and 91 days, short-term versus long-term deltas, date seasonality, region encoding, and precipitation dry-spell features when precipitation-like columns exist.
 
+## Final 0.7628 Public-Leaderboard Artifact
+
+The reported final submission is:
+
+```text
+submissions/submission_phd_below075_20260522.csv
+```
+
+It scored `0.7628` on the Kaggle public leaderboard. The reproducibility path below is a cached-prediction re-blend from retained v18 artefacts and `reports/training_menu_v1.json`; it is not a full retraining of every historical GBDT, lag, CNN, and SSL model from raw data.
+
+The authoritative first step is the data distribution analysis:
+
+```bash
+PYTHONPATH=src python scripts/analyze_data_distribution.py --emit-menu
+```
+
+This produces `reports/data_characteristics_v1.md`, `data_insights.json`, and the **training menu** `training_menu_v1.json` (the "菜單").
+
+Then the one-command cached re-blend path to the final submission family is:
+
+```bash
+make phd-below075
+```
+
+To audit the archived upload exactly, run:
+
+```bash
+make verify-submission
+```
+
+This regenerates `/tmp/dm114_verify_submission.csv`, validates its schema, and compares it with `submissions/submission_phd_below075_20260522.csv`, reporting maximum absolute and ULP differences.
+
+`ARTIFACTS.md` lists the retained data/cache/report artefacts with SHA256 hashes, producer, and consumer. Several required caches are large, so a clean clone must either include them via Git LFS/release assets or restore them into the paths listed in `ARTIFACTS.md` before running the final verification.
+
 ## Report Notes
 
 Use the validation report JSON and EDA summary for the Experiments section. A clean ablation sequence for the report is:
@@ -177,4 +217,11 @@ Use the validation report JSON and EDA summary for the Experiments section. A cl
 5. Horizon-specific models.
 6. Ensemble and clipping.
 
-The final report must be in English, 5-8 pages excluding references, and include group ID plus the public GitHub link in the abstract. Kaggle team display name must be `Team {Group ID}`.
+The final report must be in English, 5-8 pages excluding references, and include group ID plus the public GitHub link in the abstract. Kaggle team display name must be `Team {Group ID}`. Build and verify the report with:
+
+```bash
+cd report
+make clean
+make
+make check
+```

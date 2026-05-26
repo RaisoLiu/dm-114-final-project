@@ -1,0 +1,343 @@
+\documentclass[conference,10pt,a4paper]{IEEEtran}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage{caption}
+\captionsetup{justification=raggedright,singlelinecheck=false}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{placeins}
+
+\begin{document}
+\raggedbottom
+
+\title{Public-Leaderboard Multi-Track Ensembling for Drought Severity Forecasting (DM~114 Kaggle)}
+
+\author{
+\IEEEauthorblockN{Team 3}
+\IEEEauthorblockA{
+Data Mining, Spring 2026\\
+NYCU\\
+\url{https://github.com/RaisoLiu/dm-114-finalproject}
+}
+}
+
+\maketitle
+
+\begin{abstract}
+This paper presents the reported final solution of \textbf{Team 3} for the DM~114 (Spring 2026) Final Project Kaggle competition: predicting five future weekly drought severity scores (integer $0$--$5$) from 91 days of regional meteorological history. The Kaggle metric is the mean absolute error (MAE), and the public repository is \url{https://github.com/RaisoLiu/dm-114-finalproject}.
+
+Our selected submission achieves a public-leaderboard MAE of \textbf{0.7628}, a 10.6\% relative reduction over the prior team ceiling of $0.8534$. The method is a training-menu-driven multi-track ensemble. Its key empirical contribution is the use of a low-error-correlated signal --- a $\approx$6-year lagged score lookup at 2215 days whose per-region error correlation with the strongest gradient-boosted decision tree (GBDT) anchor was reported as $\rho = 0.107 \pm 0.027$ in 5-fold region CV --- which helped the team move below the observed public-leaderboard MAD--MAE trend. The artefact is regenerated as a cached-prediction re-blend by the single command \texttt{make phd-below075}, and the GitHub repository linked above contains a runnable \texttt{README.md}.
+\end{abstract}
+
+\section{Project Summary}
+
+\subsection{Task}
+For each of $R=2{,}248$ regions, the training table \texttt{train.csv} provides 5{,}480 consecutive days of daily meteorological observations (16 features such as precipitation, temperature, humidity, wind, surface pressure) and a weekly United States Drought Monitor (USDM)-style severity score in $\{0,1,2,3,4,5\}$ that is non-null on exactly one day of every 7. The test table \texttt{test.csv} provides, for the \emph{same} 2{,}248 regions, an additional 91-day weather-only window starting from each region's last training day. The objective is to predict, for each region, the scores at the next 5 weekly anchors after the 91-day input window (\texttt{pred\_week1}\,\ldots\,\texttt{pred\_week5}). The official metric is MAE, lower is better.
+
+\subsection{Why random splits fail}
+Random train/validation splits are invalid here. Within a region the score series exhibits strong autocorrelation (mean per-region lag-7 autocorrelation $> 0.7$) and a dominant multi-year periodic component (Section~\ref{sec:periodicity}), so a randomly held-out anchor sees its own immediate future leak through the training set. All experiments therefore use a \emph{time-based, leakage-safe} validation split that respects the 91-day input window and the public-leaderboard slice's position within the 6-year drought cycle.
+
+\subsection{High-level method}
+After fifteen structurally distinct attempts hit the same empirical ceiling, we found two signal families with low available error correlation evidence: (i) a pure lag-2215~d score lookup whose error correlation with the strongest single-model anchor was estimated near $\rho\approx 0.107$ in 5-fold region CV, and (ii) weather-only deep models trained without score input. Blending these with the anchor under a competition-calibrated affine post-processor produces the final $0.7628$ public-MAE artefact, captured in one JSON ``training menu'' and reproduced by \texttt{make phd-below075}.
+
+\section{Related Work}
+
+Time-series tabular forecasting on multi-region, multi-feature panels is most commonly tackled with gradient-boosted decision trees (GBDT) such as LightGBM~\cite{ke2017lightgbm} and HistGradientBoosting, which excel on heterogeneous numerical features and missing values. For pure sequence modelling, WaveNet-style dilated causal convolutions~\cite{vandenoord2016wavenet} have proven effective in Kaggle forecasting competitions, including sales forecasting~\cite{kechyn2018wavenet} that is itself referenced by the DM~114 assignment. Pre-trained foundation models for time series, notably \emph{Chronos}~\cite{ansari2024chronos}, enable zero-shot and few-shot transfer to new domains. For multi-horizon forecasting with interpretable attention, Lim et al.\ introduced the Temporal Fusion Transformer~\cite{lim2021tft}.
+
+In the drought domain specifically, the US Drought Monitor (USDM)~\cite{svoboda2002usdm} provides the canonical weekly $0$--$5$ severity labels that the competition simulates. Validation and confidence-interval estimation in this paper follow Efron's bootstrap~\cite{efron1979bootstrap}.
+
+Our work is closest in spirit to the WaveNet+GBDT ensembles of \cite{kechyn2018wavenet}, but the key methodological novelty is the explicit use of a low-correlated pure-memory lookup at the data-generating period, rather than only adding another learned model.
+
+\section{Proposed Method}
+\label{sec:method}
+
+\subsection{Notation and problem formulation}
+Let $x_{r,t}\in\mathbb{R}^{16}$ denote the 16 daily weather features for region $r$ on day $t$. A 91-day input window ending on a valid score day $t$ is $X_{r,t}=(x_{r,t-90},\ldots,x_{r,t})$. The 5 weekly targets are $y_{r,t}^{(h)}=\mathrm{score}_{r,t+7h}$ for $h\in\{1,\ldots,5\}$. The training loss for a single horizon $h$ is the mean absolute error
+\[
+\mathcal{L}_h(\hat f) = \tfrac{1}{|\mathcal D|}\sum_{(r,t)\in\mathcal D}\bigl|\hat f(X_{r,t}) - y_{r,t}^{(h)}\bigr|,
+\]
+where $\mathcal D$ contains every $(r,t)$ such that all five targets $y_{r,t}^{(1\ldots 5)}$ are non-null. Final predictions are clipped to $[0,5]$ to match the valid label range.
+
+\subsection{Leakage-safe window construction}
+Algorithm~\ref{alg:windows} produces the supervised training tensor used by every model. It is structurally identical to what \texttt{test.csv} will look like at inference: 91 days of weather followed by 5 weekly score requests with a region-specific gap of approximately 531 days, never seeing future scores.
+
+\begin{algorithm}
+\caption{Leakage-safe 91-day window construction}
+\label{alg:windows}
+\begin{algorithmic}[1]
+\For{each region $r$}
+  \For{each anchor day $t$ with score$(r,t)\neq\mathrm{NaN}$}
+    \State $X \gets$ weather rows $[t{-}90, t]$ for region $r$
+    \State $y \gets [\mathrm{score}(r,t{+}7h)]_{h=1}^{5}$
+    \If{any $y_h$ is NaN} \State continue \EndIf
+    \State emit $(X, y, r, t)$
+  \EndFor
+\EndFor
+\State \textbf{Time-based split}: validation anchors satisfy $t \ge t^{\star}_{r}$ where $t^{\star}_{r}$ is each region's 90th-percentile anchor index; training anchors are strictly earlier in time within each region.
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Per-horizon modelling}
+Five horizon-specific models are trained (one per $h$). The motivation is twofold: information decay across horizons (mean absolute change in score per week is non-trivial), and feature importance differs by lead time --- short-horizon predictions benefit from recent precipitation and dry-spell features, long-horizon predictions benefit from cyclic phase features and lag lookups.
+
+\subsection{Four-leg multi-track ensemble}
+The final prediction blends four legs with weakly correlated errors:
+\begin{itemize}
+\item \textbf{Anchor (ext150)}: a 1071-feature GBDT ensemble (LightGBM + HistGradientBoosting, multiple seeds), followed by the \emph{extrapolate-150} sharpening transform that re-projects predictions toward the empirical $0$--$5$ tails. Public MAE alone: $0.8534$.
+\item \textbf{Track 2 (Lag legs)}: pure-memory lookups at $\{1820, 2184, 2215, 2367\}$ days, with a light GBDT residual correction. The 2215-day leg is the lowest-correlated signal found in the available project evidence.
+\item \textbf{Track 3 (Dilated CNN)}: a 1-D dilated causal convolutional encoder over the 91-day weather sequence, trained with Huber loss and a region embedding.
+\item \textbf{Track 1 (SSL Transformer)}: a Time-MAE-style self-supervised Transformer pre-trained on weather-only 91-day sequences and fine-tuned with test-time training (TTT) to mitigate the OOD shift in the \texttt{cutoff\_age} feature.
+\end{itemize}
+Each leg is calibrated to the same mean and standard deviation as the anchor before blending. The blend is
+\[
+\hat y \;=\; \mathrm{clip}\!\bigl(\alpha\, \hat y_{\text{anchor}} + \beta\, \hat y_{\text{lag}} + \gamma\, \hat y_{\text{cnn}} + \delta\, \hat y_{\text{ssl}},\; 0,\, 5\bigr),
+\]
+with weights tuned on a public-like CV slice (Section~\ref{sec:exp_ablation}). A final affine post-processor $\hat y \leftarrow \mathrm{clip}\bigl((\hat y - \bar y)\cdot s + \bar y + \mu,\, 0,\, 3\bigr)$ with $(\mu,s)\approx(-0.16,0.98)$ calibrates the submission to the observed public-leaderboard severity plateau ($\bar y \approx 1.21$); this public-slice calibration risk is treated as a limitation rather than a generalization claim.
+
+\subsection{Calibration gate}
+A linear model with features $(\mathrm{oracle\_mae},\mathrm{MAD},\mathrm{mean},\mathrm{std},\mathrm{high\_frac},\rho)$ maps each candidate to an expected public MAE; the model is fit on 32 historical (candidate, public) pairs from \path{reports/_local_eval_gate_report.csv}. Only candidates whose predicted public score improves on $0.8534$ are uploaded. The fit is assessed by leave-one-out cross-validation (LOOCV): $R^2_{\mathrm{in\text{-}sample}}=0.9855$, $\mathrm{RMSE}_{\mathrm{in\text{-}sample}}=0.0103$; $R^2_{\mathrm{LOOCV}}=0.9472$, $\mathrm{RMSE}_{\mathrm{LOOCV}}=0.0196$. The $0.038$ drop from in-sample to LOOCV is modest within this fixed upload ledger, but the doubling of RMSE confirms the gate's $\approx 0.02$ uncertainty band on any single new candidate and does not constitute nested validation of the full search process.
+
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Dataset statistics}
+Table~\ref{tab:t1} summarises the corpus. The synthetic data covers $R=2{,}248$ regions over 5{,}480 daily rows each, giving roughly $1.49\times 10^{6}$ training samples after the 91-day windowing operation. The score marginal is heavily zero-inflated (the all-zero submission gives public MAE $1.2088$, matching the public-leaderboard target mean) and the public-leaderboard slice appears to land in a high-severity phase of the data-generating cycle.
+
+\begin{table}[t]
+\centering
+\caption{Dataset statistics (transcribed from \protect\path{reports/data_characteristics_v1.md}).}
+\label{tab:t1}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lr}
+\toprule
+Quantity & Value \\
+\midrule
+\# regions & 2{,}248 \\
+\# daily rows per region (\texttt{train.csv}) & 5{,}480 \\
+\# weekly score anchors per region & 782 \\
+\# meteorological feature columns & 16 \\
+\# supervised training samples (after 91-day windowing) & 1{,}485{,}928 \\
+\# validation samples (time-based split) & 233{,}792 \\
+Public test target mean (all-zero submission MAE) & 1.2088 \\
+Score support (integer) & $\{0,1,2,3,4,5\}$ \\
+Dominant ACF period of weekly scores & $\approx$\,2184\,d ($\approx$\,6.0\,yr) \\
+Median test \texttt{cutoff\_age} (last train label to test) & $\approx$\,531\,d \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\subsection{Self-defined baselines}
+Table~\ref{tab:t2} reports the baseline ladder. The five median-family baselines come from \texttt{reports/baselines.json}; the six OOF MAEs come from \texttt{reports/oof\_tensor.json}; the two public-leaderboard numbers (ext150 anchor and final blend) come from \texttt{reports/v18\_morning\_report.md}. The ext150 row reports its public MAE because no per-anchor ext150 prediction CSV is preserved on disk.
+
+\begin{table}[t]
+\centering
+\caption{Baseline ladder. ``OOF MAE'' is on the time-based validation split (233,792 samples). ``Public'' is the Kaggle public-leaderboard score (40\% of test). ``--'' = artefact not retained on disk.}
+\label{tab:t2}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrr}
+\toprule
+Method & OOF MAE & Public MAE \\
+\midrule
+\multicolumn{3}{l}{\emph{Heuristic baselines (\texttt{reports/baselines.json})}} \\
+Last-observed-score copy & 0.2369 & 1.0884 \\
+Global median & 0.6051 & 1.2088 \\
+Target-month median & 0.6051 & -- \\
+Region median & 0.6512 & -- \\
+Region$\times$target-month median & 0.6691 & -- \\
+\midrule
+\multicolumn{3}{l}{\emph{Single learned legs (\texttt{reports/oof\_tensor.json})}} \\
+b91 LightGBM (seed 114) & 0.3814 & -- \\
+b91 LightGBM (seed 271828) & 0.3753 & -- \\
+b91 HistGradientBoosting (seed 31415) & 0.3792 & -- \\
+pl LightGBM (seed 114) & 0.4312 & -- \\
+pl LightGBM (seed 271828) & 0.4290 & -- \\
+pl HistGradientBoosting (seed 31415) & 0.4253 & -- \\
+Simple mean of the 6 legs above & 0.3910 & -- \\
+\midrule
+\multicolumn{3}{l}{\emph{Team milestones}} \\
+ext150 anchor (prior team best) & -- & 0.8534 \\
+v18 7-way blend (mid-iteration) & -- & 0.7952 \\
+\textbf{Final: phd-below075 (this work)} & -- & \textbf{0.7628} \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+Two observations: (1) the heuristic ``last-observed-score copy'' has the best \emph{OOF} MAE of any baseline (0.2369) yet a much worse \emph{public} MAE (1.0884) --- a textbook leakage-versus-distribution-shift gap that motivates our public-like CV design; (2) the OOF gap between $b91$ and $pl$ legs ($\sim 0.05$) confirms that feature engineering ($b91$ uses the full 1071-feature pipeline; $pl$ is a simpler horizon-pooled variant) matters more than seed choice.
+
+\subsection{Per-horizon MAE breakdown}
+Table~\ref{tab:t3} decomposes each OOF leg by horizon. The MAE rises monotonically from $h{=}1$ to $h{=}5$ for every leg, consistent with the information-decay justification for per-horizon modelling.
+
+\begin{table}[t]
+\centering
+\caption{Per-horizon validation MAE for the 6 OOF legs, computed from \texttt{reports/oof\_tensor.csv} via \texttt{groupby("horizon").apply(MAE)}. ``All'' is the average across all 33{,}720 OOF rows.}
+\label{tab:t3}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrrrrrr}
+\toprule
+Leg & All & h1 & h2 & h3 & h4 & h5 \\
+\midrule
+b91 LGBM s114 & 0.3814 & 0.3572 & 0.3713 & 0.3915 & 0.3849 & 0.4020 \\
+b91 LGBM s271828 & 0.3753 & 0.3461 & 0.3654 & 0.3874 & 0.3853 & 0.3924 \\
+b91 HGB s31415 & 0.3792 & 0.3494 & 0.3711 & 0.3862 & 0.3874 & 0.4016 \\
+pl LGBM s114 & 0.4312 & 0.4065 & 0.4310 & 0.4436 & 0.4265 & 0.4482 \\
+pl LGBM s271828 & 0.4290 & 0.4079 & 0.4217 & 0.4422 & 0.4305 & 0.4426 \\
+pl HGB s31415 & 0.4253 & 0.3951 & 0.4180 & 0.4395 & 0.4257 & 0.4483 \\
+\midrule
+Simple-mean ensemble & 0.3910 & 0.3656 & 0.3839 & 0.4023 & 0.3937 & 0.4096 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\subsection{Public submission trajectory}
+\label{sec:exp_ablation}
+Table~\ref{tab:t4} reports the public-leaderboard submission trajectory. Each row is a single uploaded artefact from the \path{reports/_local_eval_gate_report.csv} ledger, so the deltas are not a controlled held-out ablation. They show the order in which public submissions improved: lag and deep-track blends moved below the 0.8534 anchor, while the final affine + clip step is best interpreted as competition calibration with explicit private-leaderboard risk.
+
+\begin{table}[t]
+\centering
+\caption{Public submission trajectory. ``$\Delta$'' is the public-MAE change versus the row above, not a controlled validation-set ablation. Configurations are sourced from \protect\path{reports/_local_eval_gate_report.csv}.}
+\label{tab:t4}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrr}
+\toprule
+Configuration & Public MAE & $\Delta$ \\
+\midrule
+ext150 anchor (1071-feat GBDT + extrapolate-150) & 0.8534 & --- \\
++ 3-way blend with lag legs & 0.8100 & $-0.0434$ \\
++ 4-way (lag + Track 3 CNN) & 0.8017 & $-0.0083$ \\
++ 7-way (add SSL Transformer + harmonics) & 0.7952 & $-0.0065$ \\
++ affine post-processor + clip 3.0 (final) & \textbf{0.7628} & $-0.0324$ \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\subsection{Multi-year periodicity}
+\label{sec:periodicity}
+Figure~\ref{fig:periodicity} reports, from real data, the multi-year periodicity that the lag legs exploit. Panel (a) shows the distribution of the dominant FFT period across all 2,248 regions: a clear mass appears in the 5--8\,year band (highlighted in red), and a separate mass at $\approx 15$\,years corresponds to a harmonic of the same underlying cycle. Panel (b) plots the raw weekly score series for two example regions, which visibly oscillate on a multi-year envelope. Panel (c) quantifies the per-region distribution of the dominant period: $\sim$30\% of regions fall in the 5--8\,year band that our lag-2215 leg targets, and a similar fraction sits at the $\geq 12$-year harmonic. (Note: the panel does \emph{not} claim a per-region ACF at exactly 2215 days; the 5-fold cross-validated orthogonality figure $\rho = 0.107 \pm 0.027$ is reported separately in Iteration 2 of our review.)
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig1_periodicity.pdf}
+\caption{Multi-year periodicity in the weekly drought scores --- evidence for the lag-leg design choice. (a) Histogram of dominant FFT period per region across all $R{=}2{,}248$ regions (in years; 5--8-year band shaded). (b) Example weekly score series for two regions (R1 and R1001) showing visible multi-year structure. (c) Per-region distribution of the dominant FFT period, binned into 5 ranges. Data source: \protect\path{reports/_track2_fft_peaks.csv} and \protect\path{data/train.csv}.}
+\label{fig:periodicity}
+\end{figure}
+
+\subsection{Observed public-ledger slope trend}
+Figure~\ref{fig:slope} shows, from the 32 historical $(\mathrm{MAD},\mathrm{public})$ uploads in \path{reports/_local_eval_gate_report.csv}, the empirical positive-slope relationship between MAD-from-anchor and public MAE. Blue circles are pre-v18 candidates; orange triangles are the 3 v18+ candidates. A submission-row bootstrap fit (B=1000) over all 32 points gives slope $0.20$ (95\% CI $[0.05, 0.26]$) and intercept $0.85$ (95\% CI $[0.82, 0.88]$). Because these rows are adaptive submissions rather than independent experimental units, we treat the positive slope as descriptive evidence of an observed public-leaderboard trend, not as a standalone statistical law. The v18+ orange cluster is the first group in this ledger to drop below the bootstrap-fitted trend line.
+
+The bootstrap restricted to the 29 pre-v18 rows only also gives a slope near $0.21$; the often-quoted earlier number of $\approx 0.42$ from internal team analyses was an upper-tail subset, not the population fit. We present the bootstrap-fitted line in Fig.~\ref{fig:slope} from real data (rather than the older anecdotal $0.42$) because it is the auditable estimate over the actual evidence in \path{reports/_local_eval_gate_report.csv}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig2_slope.pdf}
+\caption{Observed slope trend on real submission data. Each marker is one Kaggle upload from the 32-row \protect\path{reports/_local_eval_gate_report.csv} gate ledger. Dashed line: submission-row bootstrap-fitted slope on all 32 rows ($0.20$, 95\% CI $[0.05, 0.26]$, shaded band B=1000). Dotted line: bootstrap-fitted slope on the 29 pre-v18 rows only ($0.21$). Solid grey line: ext150 ceiling $0.8534$. v18+ candidates (orange triangles) are the first uploads in this ledger to drop below the bootstrap-fitted line, with the lowest sitting at $0.7952$.}
+\label{fig:slope}
+\end{figure}
+
+\subsection{Cross-leg residual correlation (real OOF)}
+Figure~\ref{fig:ortho} is the real $6{\times}6$ region-mean residual correlation matrix computed by \texttt{scripts/report\_stats.py} on the 33,720-row OOF tensor (\path{reports/oof_tensor.csv}). Two clean blocks are visible: within the $b91$ family ($\rho{\approx}0.98$ across LGBM/HGB seeds) and within the $pl$ family ($\rho{\approx}0.98$), with the cross-family correlation only $\rho{\approx}0.79\text{--}0.82$. This is the directly reproducible justification for keeping both tabular feature families in the ensemble. The stronger low-correlation claim for $\rho = 0.107 \pm 0.027$ comes from a separate 5-fold region-CV result involving the lag-2215 and weather-only deep legs, reported in \path{reports/data_characteristics_v1.md}; because those aligned OOF predictions were not preserved, we treat that number as supporting evidence rather than a fully recomputable claim. Bootstrap intervals in this report follow the resampling procedure of Efron~\cite{efron1979bootstrap}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig3_orthogonality.pdf}
+\caption{Real $6{\times}6$ region-mean residual correlation matrix for the 6 OOF GBDT legs (2{,}248 regions, computed from \protect\path{reports/oof_tensor.csv}). The two $\approx 0.98$ on-diagonal blocks correspond to the $b91$ and $pl$ feature families; the off-diagonal $\approx 0.80$ value is the within-tabular ensemble diversity. Cross-leg correlation evidence $\rho = 0.107 \pm 0.027$ for the lag-2215 leg (5-fold region CV) is reported in \protect\path{reports/data_characteristics_v1.md} and is not directly recomputable here because that leg's OOF predictions were not preserved on disk.}
+\label{fig:ortho}
+\end{figure}
+
+\subsection{5-fold region CV and trajectory}
+Figures~\ref{fig:cv} and~\ref{fig:trajectory} support the 5-fold region CV and submission-trajectory claims.
+
+\subsection{Threats to validity}
+\label{sec:tov}
+We list four threats and the evidence that bounds each.
+
+\emph{(i) Calibration-gate overfit.} The 32-row gate fit has $R^2_{\mathrm{in\text{-}sample}}=0.9855$ but $R^2_{\mathrm{LOOCV}}=0.9472$; the LOO RMSE of $0.0196$ is the uncertainty band we attach to any one new candidate's predicted public MAE.
+
+\emph{(ii) Slope-trend point estimate.} The submission-row bootstrap CI on the slope (B=1000) excludes zero ($[0.05, 0.26]$), supporting a positive association in the 32-upload ledger. Because the uploads were adaptively chosen, this is descriptive evidence rather than a controlled statistical test.
+
+\emph{(iii) Orthogonality claim $\rho=0.107$.} The OOF predictions for the lag-2215 leg and the SSL Transformer are not preserved on disk, so we cannot bootstrap $\rho$ from scratch here. We instead cite the 5-fold region-CV figure $\rho = 0.107 \pm 0.027$ from \texttt{reports/data\_characteristics\_v1.md}, which is itself an interval estimate (5 fold means $\pm$ 1 standard deviation), and we report the real $6{\times}6$ within-GBDT residual correlation matrix (Fig.~\ref{fig:ortho}) as the data-grounded part of the orthogonality story.
+
+\emph{(iv) Public/private regime shift.} The 0.7628 result was achieved by tuning on public-test-like CV folds (high-severity phase, target mean $\approx 1.21$). If the private leaderboard slice lands in a low-severity phase of the 6-year cycle, the lag-leg contribution attenuates and the GBDT anchor dominates. We deliberately keep $\geq 60\%$ blend weight on the anchor to bound this risk; we do not state a numeric private-LB prediction.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig4_cv_generalization.pdf}
+\caption{5-fold region CV evidence (panels reproduced from \texttt{reports/plots/cv1...cv4*.png}). (a) Calibration OOF scatter (RMSE 0.015 between in-sample and OOF predictions); (b) lag-$\rho$ stability across folds (mean $\approx 0.107$, std $\approx 0.027$); (c) in-sample vs.\ OOF blend MAE ratio $\approx 1.001$ for the chosen weights; (d) per-fold final-candidate MAE for the 0.7628 blend. These diagnostics suggest the chosen weights are not driven by a single fold, but they are not a substitute for private-leaderboard validation.}
+\label{fig:cv}
+\end{figure*}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig5_trajectory.pdf}
+\caption{Submission trajectory on the public leaderboard. From the prior team ceiling of 0.8534 (ext150) through the 0.7952 mid-iteration blend to the final 0.7628 \texttt{phd-below075} artefact --- a 10.6\% relative improvement.}
+\label{fig:trajectory}
+\end{figure}
+
+\section{Reproducibility}
+
+\subsection{Environment}
+Python 3.11; the relevant pinned versions are \texttt{numpy} 1.26, \texttt{pandas} 2.1, \texttt{scikit-learn} 1.4, \texttt{lightgbm} 4.3, \texttt{matplotlib} 3.8. The complete environment is specified in the repository's \texttt{requirements.txt}.
+
+\subsection{Single-command cached re-blend of the 0.7628 submission}
+The uploaded artefact basename \path{submission_phd_below075_20260522.csv} lives under \path{submissions/}. It is regenerated from cached predictions and the training menu by \texttt{make phd-below075}, which expands to the two commands shown in Figure~\ref{fig:repro}. This target does not retrain every historical model from raw data; it reuses the retained v18/cache artefacts documented in \path{ARTIFACTS.md}.
+
+\begin{figure}[t]
+\centering
+\begin{footnotesize}
+\begin{verbatim}
+PYTHONPATH=src python \
+  scripts/analyze_data_distribution.py \
+  --force-synthesis --emit-menu
+
+PYTHONPATH=src python \
+  scripts/multi_blend_grid.py \
+  --menu reports/training_menu_v1.json \
+  --fixed \
+  --out submissions/submission_\
+       phd_below075_$(date +%Y%m%d).csv
+\end{verbatim}
+\end{footnotesize}
+\caption{The two commands executed by \texttt{make phd-below075}. This is the cached re-blend path used to reproduce the uploaded CSV; \texttt{make verify-submission} compares the output against the archived artefact.}
+\label{fig:repro}
+\end{figure}
+
+\noindent The regenerated CSV matches the uploaded artefact with maximum absolute difference below $5\times10^{-16}$ in \texttt{make verify-submission}; all numerical comparisons in this report are stable at the 4-decimal precision used throughout.
+
+\subsection{Build of this report}
+\texttt{cd report \&\& make} runs the figure generator (\path{report/figures/generate_figures.py}) and two passes of \texttt{pdflatex} to produce the IEEE A4 PDF. The Makefile also exposes a \texttt{make check} target that verifies the headline strings (\texttt{Team 3}, \texttt{0.7628}, GitHub URL) appear in the PDF.
+
+\section{Limitations}
+
+\emph{Synthetic data.} The competition data is a synthetic re-rendering of a US-county-level drought corpus; our model's improvements may not transfer linearly to a true operational drought monitor.
+
+\emph{Public/private regime risk.} The 0.7628 result was achieved by tuning on a public-leaderboard-like CV phase. If the private-leaderboard slice lands in a different phase of the 6-year cycle, the lag-leg contribution may attenuate; the GBDT anchor would then carry more of the prediction. The final affine shift and clip upper bound are especially public-slice-sensitive, so we do not state a numeric private-leaderboard prediction.
+
+\emph{OOD on \texttt{cutoff\_age}.} The test gap between the last training label and the prediction window has median $\approx$\,531\,days, outside the deepest training densities; Track~3's test-time training is an explicit mitigation.
+
+\emph{Calibration gate sample size.} The 32-point linear gate is small (see Threats to Validity in Section~\ref{sec:tov}); its LOOCV $R^2 = 0.9472$ implies a $\pm 0.02$ uncertainty band on any one new candidate's predicted public MAE.
+
+\emph{Computational budget.} The cached re-blend/report path runs in roughly 1.5 hours on a single 16-core CPU node plus one consumer GPU (RTX 4090 for Track~3 cache generation); the training menu and OOF tensors total $\approx 4.5$\,GB on disk.
+
+\emph{What we did not measure.} We did not retrain the GBDT anchor, the lag legs, or the deep tracks for this report --- the goal is reproducible description of the cached artefact that scored 0.7628, not a fresh hyperparameter sweep. Per-region failure-mode analysis (which regions does the blend hurt rather than help?) is left for future work.
+
+\clearpage
+
+\noindent\textbf{Author Contributions.}
+All authors are members of Team 3 (DM 114, Spring 2026). Specific contributions, in alphabetical order of family name, are recorded in the GitHub repository's contribution log; the team collectively assumes responsibility for the design, the reported numbers, and the reproducibility of the artefact described above. The report itself was assembled iteratively from internal experiment logs (\path{docs/JOURNEY.md}, \path{reports/v18_morning_report.md}) and the artefact ledger (\path{reports/_local_eval_gate_report.csv}, \path{reports/oof_tensor.csv}); statistical claims were audited by leave-one-out cross-validation and bootstrap resampling against those artefacts before inclusion.
+
+\bibliographystyle{IEEEtran}
+\begin{thebibliography}{00}
+\bibitem{ke2017lightgbm} G. Ke, Q. Meng, T. Finley, T. Wang, W. Chen, W. Ma, Q. Ye, and T.-Y. Liu, ``LightGBM: A highly efficient gradient boosting decision tree,'' in \emph{Advances in Neural Information Processing Systems (NeurIPS)}, vol. 30, 2017.
+\bibitem{vandenoord2016wavenet} A. van den Oord, S. Dieleman, H. Zen, K. Simonyan, O. Vinyals, A. Graves, N. Kalchbrenner, A. Senior, and K. Kavukcuoglu, ``WaveNet: A generative model for raw audio,'' \emph{arXiv preprint arXiv:1609.03499}, 2016.
+\bibitem{kechyn2018wavenet} G. Kechyn, L. Yu, Y. Zang, and S. Kechyn, ``Sales forecasting using WaveNet within the framework of the Kaggle competition,'' \emph{arXiv preprint arXiv:1803.04037}, 2018.
+\bibitem{ansari2024chronos} A. F. Ansari, L. Stella, C. Turkmen, X. Zhang, P. Mercado, H. Shen, O. Shchur, S. S. Rangapuram, S. P. Arango, S. Kapoor, J. Zschiegner, D. C. Maddix, M. W. Mahoney, K. Torkkola, A. G. Wilson, M. Bohlke-Schneider, and Y. Wang, ``Chronos: Learning the language of time series,'' \emph{arXiv preprint arXiv:2403.07815}, 2024.
+\bibitem{lim2021tft} B. Lim, S. \"O. Arik, N. Loeff, and T. Pfister, ``Temporal fusion transformers for interpretable multi-horizon time series forecasting,'' \emph{International Journal of Forecasting}, vol. 37, no. 4, pp. 1748--1764, 2021.
+\bibitem{svoboda2002usdm} M. Svoboda, D. LeComte, M. Hayes, R. Heim, K. Gleason, J. Angel, B. Rippey, R. Tinker, M. Palecki, D. Stooksbury, D. Miskus, and S. Stephens, ``The drought monitor,'' \emph{Bulletin of the American Meteorological Society}, vol. 83, no. 8, pp. 1181--1190, 2002.
+\bibitem{efron1979bootstrap} B. Efron, ``Bootstrap methods: Another look at the jackknife,'' \emph{Annals of Statistics}, vol. 7, no. 1, pp. 1--26, 1979.
+\end{thebibliography}
+
+\end{document}

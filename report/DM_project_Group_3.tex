@@ -11,6 +11,8 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{placeins}
+\usepackage{xeCJK}
+\setCJKmainfont{Noto Serif CJK TC}
 
 \begin{document}
 \raggedbottom
@@ -18,7 +20,7 @@
 \title{Seasonal-Lag and Multi-Track Ensembling for Drought Severity Forecasting (DM~114 Kaggle)}
 
 \author{
-\IEEEauthorblockN{Team 3}
+\IEEEauthorblockN{Team 3 \quad 劉宇舜 (413551030) \quad 張東浩 (413551038) \quad 陳冠甫 (414551017)}
 \IEEEauthorblockA{
 Data Mining, Spring 2026\\
 NYCU\\
@@ -64,7 +66,7 @@ Let $x_{r,t}\in\mathbb{R}^{16}$ denote the 16 daily weather features for region 
 where $\mathcal D$ contains every $(r,t)$ such that all five targets $y_{r,t}^{(1\ldots 5)}$ are non-null. Final predictions are clipped to $[0,5]$ to match the valid label range.
 
 \subsection{Leakage-safe window construction}
-Algorithm~\ref{alg:windows} produces the supervised training tensor used by every model. It is structurally identical to what \texttt{test.csv} will look like at inference: 91 days of weather followed by 5 weekly score requests with a region-specific gap of approximately 531 days, never seeing future scores.
+Algorithm~\ref{alg:windows} produces the supervised training tensor used by every model. It matches the windowing format of \texttt{test.csv} (91 days of weather followed by 5 weekly score requests, never seeing future scores); the public-like validation slice additionally matches the median cutoff-age of $\approx$531 days between the last training label and the prediction window.
 
 \begin{algorithm}
 \caption{Leakage-safe 91-day window construction}
@@ -97,7 +99,7 @@ Each leg is calibrated to the same mean and standard deviation as the anchor bef
 \[
 \hat y \;=\; \mathrm{clip}\!\bigl(\alpha\, \hat y_{\text{anchor}} + \beta\, \hat y_{\text{lag}} + \gamma\, \hat y_{\text{cnn}} + \delta\, \hat y_{\text{ssl}},\; 0,\, 5\bigr),
 \]
-with weights tuned on a public-like CV slice (Section~\ref{sec:exp_ablation}). A final affine post-processor $\hat y \leftarrow \mathrm{clip}\bigl((\hat y - \bar y)\cdot s + \bar y + \mu,\, 0,\, 3\bigr)$ with $(\mu,s)\approx(-0.16,0.98)$ calibrates the submission to the observed public-leaderboard severity plateau ($\bar y \approx 1.21$); this public-slice calibration risk is treated as a limitation rather than a generalization claim.
+with weights tuned on a public-like CV slice (Section~\ref{sec:exp_ablation}). The Greek-letter notation maps to the abstract's training-menu letters as $(\alpha,\beta,\gamma,\delta)\equiv(A,\,C,\,B/2,\,B/2)$, with the deep-variant term $D{=}0.10$ folded into the deep family at inference: i.e.\ $A{=}0.20$ anchor, $C{=}0.25$ lag, $B{=}0.45$ deep (CNN+SSL aggregate), $D{=}0.10$ deep variants. A final affine post-processor $\hat y \leftarrow \mathrm{clip}\bigl((\hat y - \bar y)\cdot s + \bar y + \mu,\, 0,\, 3\bigr)$ with $(\mu,s)\approx(-0.16,0.98)$ calibrates the submission to the observed public-leaderboard severity plateau ($\bar y \approx 1.21$); this public-slice calibration risk is treated as a limitation rather than a generalization claim.
 
 \subsection{Calibration gate}
 A linear model with features $(\mathrm{oracle\_mae},\mathrm{MAD},\mathrm{mean},\mathrm{std},\mathrm{high\_frac},\rho)$ maps each candidate to an expected public MAE; the model is fit on 32 historical (candidate, public) pairs from \path{reports/_local_eval_gate_report.csv}. Only candidates whose predicted public score improves on $0.8534$ are uploaded. The fit is assessed by leave-one-out cross-validation (LOOCV): $R^2_{\mathrm{in\text{-}sample}}=0.9855$, $\mathrm{RMSE}_{\mathrm{in\text{-}sample}}=0.0103$; $R^2_{\mathrm{LOOCV}}=0.9472$, $\mathrm{RMSE}_{\mathrm{LOOCV}}=0.0196$. The $0.038$ drop from in-sample to LOOCV is modest within this fixed upload ledger, but the doubling of RMSE confirms the gate's $\approx 0.02$ uncertainty band on any single new candidate and does not constitute nested validation of the full search process.
@@ -195,7 +197,7 @@ Simple-mean ensemble & 0.3910 & 0.3656 & 0.3839 & 0.4023 & 0.3937 & 0.4096 \\
 
 \subsection{Public submission trajectory and controlled ablation}
 \label{sec:exp_ablation}
-Table~\ref{tab:t4} reports the public-leaderboard submission trajectory: each row is a single uploaded artefact from the \path{reports/_local_eval_gate_report.csv} ledger, so the deltas are \emph{not} a controlled held-out ablation. The controlled OOF-aligned ablation that decomposes the same nine method components is Table~\ref{tab:t5}; we retain the trajectory because three of its rows have public-leaderboard ground truth that the OOF tensor cannot supply.
+Table~\ref{tab:t4} reports the public-leaderboard submission trajectory: each row is a single uploaded artefact from the \path{reports/_local_eval_gate_report.csv} ledger, so the deltas are \emph{not} a controlled held-out ablation. The controlled OOF-aligned ablation that decomposes the same nine method components is Table~\ref{tab:t5}; we retain the trajectory because three of its rows have public-leaderboard ground truth that the OOF tensor cannot supply. OOF MAE in Table~\ref{tab:t5} is used to audit relative component behaviour across the menu, not as a predictor of public or private leaderboard score; the OOF-vs-public mismatch documented in Table~\ref{tab:t2} (e.g., last-observed-score copy has OOF $0.2369$ but public $1.0884$) is a leakage-vs-distribution-shift gap, not a contradiction.
 
 \begin{table}[t]
 \centering
@@ -260,7 +262,7 @@ The bootstrap restricted to the 29 pre-v18 rows only also gives a slope near $0.
 \label{fig:slope}
 \end{figure}
 
-\subsection{Cross-leg residual correlation (real OOF)}
+\subsection{Cross-family residual diversity (real OOF)}
 \label{sec:ortho}
 Figure~\ref{fig:ortho} is the real $6{\times}6$ region-mean residual correlation matrix on the $33{,}720$-row OOF tensor (\path{reports/oof_tensor.csv}). Two clean blocks are visible: within the $b91$ family ($\rho{\approx}0.98$ across LGBM/HGB seeds) and within the $pl$ family ($\rho{\approx}0.98$), with the cross-family value only $\rho{\approx}0.79\text{--}0.82$. This is the directly reproducible justification for keeping both tabular feature families in the ensemble.
 
@@ -270,7 +272,7 @@ For the cross-\emph{family} residual correlation against the GBDT anchor (the la
 \item CNN (mean of 5 cached Track-3 runs): mean $\rho = 0.54$, 95\% CI $[0.524, 0.562]$ ($n{=}2{,}248$);
 \item SSL Transformer: mean $\rho = 0.33$, 95\% CI $[0.311, 0.349]$ ($n{=}2{,}248$).
 \end{itemize}
-The SSL Transformer is the least-correlated leg with the GBDT anchor, not lag-2215. The earlier training-menu figure ``$\rho = 0.107 \pm 0.027$'' for lag-2215 (from \path{reports/data_characteristics_v1.md}) was computed under a different aggregation that the original artefacts no longer permit auditing; the iter4 recomputation above supersedes it. Cached file SHA256 hashes are in \path{ARTIFACTS.md}.
+These values reflect \emph{cross-family residual diversity} rather than strict orthogonality: SSL is materially lower-correlated with the GBDT anchor than CNN or lag-2215, but $\rho{\approx}0.33$ does not constitute independence. The earlier training-menu figure ``$\rho = 0.107 \pm 0.027$'' for lag-2215 (from \path{reports/data_characteristics_v1.md}) was computed under a different aggregation that the original artefacts no longer permit auditing; the iter4 recomputation above supersedes it. Cached file SHA256 hashes are in \path{ARTIFACTS.md}.
 
 \begin{figure}[t]
 \centering
@@ -290,7 +292,7 @@ We list four threats and the evidence that bounds each.
 
 \emph{(ii) Slope-trend point estimate.} The submission-row bootstrap CI on the slope (B=1000) excludes zero ($[0.05, 0.26]$), supporting a positive association in the 32-upload ledger. Because the uploads were adaptively chosen, this is descriptive evidence rather than a controlled statistical test.
 
-\emph{(iii) Orthogonality claim (iter4 update).} The iter4 recomputation supersedes the earlier $\rho = 0.107 \pm 0.027$ figure from \texttt{reports/data\_characteristics\_v1.md}: the regenerated and row-aligned OOF predictions for the lag-2215 leg and the SSL Transformer now allow a direct, bootstrap-CI bounded per-region Pearson computation (Section~\ref{sec:ortho}). The new values are $\rho{=}0.51$ (lag-2215), $0.54$ (CNN), $0.33$ (SSL). The lower SSL value most plausibly explains the SSL leg's positive contribution in Table~\ref{tab:t5}; lag-2215 contributes primarily through label-distribution coverage rather than residual independence.
+\emph{(iii) Cross-family residual diversity (iter4 update).} The iter4 recomputation supersedes the earlier $\rho = 0.107 \pm 0.027$ figure from \texttt{reports/data\_characteristics\_v1.md}: the regenerated and row-aligned OOF predictions for the lag-2215 leg and the SSL Transformer now allow a direct, bootstrap-CI bounded per-region Pearson computation (Section~\ref{sec:ortho}). The new values are $\rho{=}0.51$ (lag-2215), $0.54$ (CNN), $0.33$ (SSL). These are \emph{lower-correlated} rather than orthogonal; SSL is the materially lowest. The lower SSL value most plausibly explains the SSL leg's positive contribution in Table~\ref{tab:t5}; lag-2215 contributes primarily through label-distribution coverage rather than residual independence.
 
 \emph{(iv) Public/private regime shift.} The 0.7628 result was achieved by tuning on public-test-like CV folds (high-severity phase, target mean $\approx 1.21$). The training menu's convex weights are $A{=}0.20$ (GBDT anchor) $+\, B{=}0.45$ (deep CNN+SSL) $+\, C{=}0.25$ (lag) $+\, D{=}0.10$ (deep variants); the lag component is therefore only $25\%$ of the blend, and if it attenuates on a private slice landing in a different phase of the 6-year cycle the remaining $75\%$ from weather-driven components ($A{+}B{+}D$) still covers the prediction. We do not state a numeric private-LB prediction. Direct evidence that the final affine-and-clip step is a \emph{public-slice calibration} rather than a general-purpose improvement comes from Table~\ref{tab:t5}: the full blend without affine/clip (row 8) has OOF MAE $0.5325$, while the affine-and-clip variant (row 9) has OOF MAE $0.5766$ --- worse on the OOF tensor --- yet wins on public ($0.7628$). The step trades OOF accuracy for proximity to the public severity plateau and is therefore a competition-calibration step with explicit private-LB risk. If Kaggle's automatic two-submission selection allows it, the no-affine 7-way row of Table~\ref{tab:t4} (public MAE $0.7952$) is the natural private-LB-conservative sibling to the 0.7628 final.
 
@@ -345,7 +347,7 @@ PYTHONPATH=src python \
 
 \emph{Synthetic data.} The competition data is a synthetic re-rendering of a US-county-level drought corpus; our model's improvements may not transfer linearly to a true operational drought monitor.
 
-\emph{Public/private regime risk.} The 0.7628 result was achieved by tuning on a public-leaderboard-like CV phase. If the private-leaderboard slice lands in a different phase of the 6-year cycle, the lag-leg contribution may attenuate; the GBDT anchor would then carry more of the prediction. The final affine shift and clip upper bound are especially public-slice-sensitive, so we do not state a numeric private-leaderboard prediction.
+\emph{Public/private regime risk.} The 0.7628 result was achieved by tuning on a public-leaderboard-like CV phase. If the private-leaderboard slice lands in a different phase of the 6-year cycle, the lag-leg contribution may attenuate; the GBDT anchor would then carry more of the prediction. The final affine shift and clip upper bound are especially public-slice-sensitive, so we do not state a numeric private-leaderboard prediction. \textbf{We interpret 0.7628 as a public-leaderboard result, not as an unbiased estimate of private test MAE}; the affine-and-clip step is in particular a public-slice calibration (see Threats~(iv) in Section~\ref{sec:tov} and the OOF row 9 vs.\ row 8 inversion in Table~\ref{tab:t5}).
 
 \emph{OOD on \texttt{cutoff\_age}.} The test gap between the last training label and the prediction window has median $\approx$\,531\,days, outside the deepest training densities; Track~3's test-time training is an explicit mitigation.
 
@@ -358,7 +360,7 @@ PYTHONPATH=src python \
 \clearpage
 
 \noindent\textbf{Author Contributions.}
-All authors are members of Team 3 (DM 114, Spring 2026). Specific contributions, in alphabetical order of family name, are recorded in the GitHub repository's contribution log; the team collectively assumes responsibility for the design, the reported numbers, and the reproducibility of the artefact described above. The report itself was assembled iteratively from internal experiment logs (\path{docs/JOURNEY.md}, \path{reports/v18_morning_report.md}) and the artefact ledger (\path{reports/_local_eval_gate_report.csv}, \path{reports/oof_tensor.csv}); statistical claims were audited by leave-one-out cross-validation and bootstrap resampling against those artefacts before inclusion.
+Team 3 (DM 114, Spring 2026) members: 劉宇舜 (413551030), 張東浩 (413551038), 陳冠甫 (414551017). Specific contributions are recorded in the GitHub repository's contribution log; the team collectively assumes responsibility for the design, the reported numbers, and the reproducibility of the artefact described above. The report itself was assembled iteratively from internal experiment logs (\path{docs/JOURNEY.md}, \path{reports/v18_morning_report.md}) and the artefact ledger (\path{reports/_local_eval_gate_report.csv}, \path{reports/oof_tensor.csv}); statistical claims were audited by leave-one-out cross-validation and bootstrap resampling against those artefacts before inclusion.
 
 \bibliographystyle{IEEEtran}
 \begin{thebibliography}{00}

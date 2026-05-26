@@ -235,3 +235,29 @@ Scope of each iteration is set by the approved plan at `~/.claude/plans/system-i
 - ✅ Kaggle Display Name = `Team 3` — confirmed via screenshot evidence.
 - 🔴 Kaggle final-selected submissions: verify the two automatic picks are the 0.7628 (aggressive) and 0.7952 (no-affine, private-conservative) pair.
 - ⚠️  ~80 experiment scripts referenced by the report still untracked on remote git tree.
+
+---
+
+## Iteration 7 — 2026-05-26  (user-added member names + reviewer iter5 fixes)
+
+### What changed
+- **3 team members added** to author block (page 1) + Author Contributions section. xeCJK package added to preamble (`\usepackage{xeCJK}` + `\setCJKmainfont{Noto Serif CJK TC}`). Names render correctly in PDF text dump: 劉宇舜 (413551030), 張東浩 (413551038), 陳冠甫 (414551017). Tectonic 0.16.9 with Noto Serif CJK TC handles CJK natively — no fallback needed.
+- iter5 review accepted (in addition to iter6's URL change):
+  - **Algorithm 1 softening**: "structurally identical to test.csv" → "matches the windowing format of test.csv; the public-like validation slice additionally matches the median cutoff-age of ~531 days".
+  - **Method α↔A bridge**: appended one sentence mapping (α,β,γ,δ) ≡ (A, C, B/2, B/2), with explicit listing of the 4 menu-letter weights.
+  - **OOF caveat**: added one sentence in §Public submission trajectory and controlled ablation explaining OOF MAE audits relative behavior, not predicts public/private LB; the OOF/public mismatch in Table II is a leakage-vs-distribution-shift gap, not a contradiction.
+  - **Orthogonality → cross-family residual diversity**: §Cross-leg residual correlation renamed to "Cross-family residual diversity"; Threats (iii) header same; body text now says "lower-correlated rather than orthogonal; SSL is the materially lowest".
+  - **Limitations**: added "We interpret 0.7628 as a public-leaderboard result, not as an unbiased estimate of private test MAE" sentence pointing to Threats (iv) and Table V row 9 vs row 8.
+- **README cache-requirements section** appended: expected directory tree, expected runtimes (verify-sub 30s, ablation 3min, test 10s, cv-fast 5min), CPU-only path note, 4 explicit failure-mode entries (missing train.csv, missing cache/, SHA256 mismatch, tectonic auto-fetch). Plus one sentence: "The lag component is trained only from labels in data/train.csv and never accesses future labels, test labels, or any external data source."
+- iter7 PDF snapshot: `reports/DM_project_Group_3_iter7.pdf` (SHA TBD before commit).
+- `make check` ✓, `make verify-submission` ✓ (max abs diff 4.4e-16), 8 pages A4.
+
+### Pushbacks (reviewer suggestions declined as already-addressed or low-value)
+- **Reviewer**: drop Fig 4 panel (b). **Pushback**: caption already labels it superseded historical context (iter4 update); removing one panel of a 4-panel composite requires figure regen + LaTeX rework with marginal benefit.
+- **Reviewer**: add a smoke test. **Already done** in iter5 (`make test` + `make cv-fast` in README).
+- **Reviewer**: final filename should be `DM_project_Group_3.pdf`. **Already correct** — `_iterN_stamped.pdf` files are archival siblings; canonical submission name has always been `DM_project_Group_3.pdf`.
+
+### Outstanding human-only blockers (unchanged)
+- 🔴 GitHub repo `https://github.com/RaisoLiu/dm-114-final-project` needs to be created public + remote commits (4c37fb8 + dd961f3 + 4f12dcd + 0c9cf7f + this iter7 commit) pushed.
+- 🔴 Kaggle final-selected submissions: confirm 0.7628 (aggressive) + 0.7952 (no-affine sibling) are the two auto-picked. Kaggle display name `Team 3` already confirmed (iter6).
+- ⚠️ ~80 experiment scripts referenced by the report still untracked on remote git tree.

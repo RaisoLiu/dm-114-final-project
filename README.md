@@ -285,6 +285,55 @@ training, the windowing, and the validation harness all execute against real
 `make ablation` (layer 3, regenerates lag-2215 OOF + SSL inference + 9-row
 ablation), this gives an end-to-end reproducibility ladder.
 
+The lag component is trained only from labels in `data/train.csv` and never
+accesses future labels, test labels, or any external data source.
+
+### Cache requirements and failure modes
+
+Expected on-disk layout after restoring caches:
+
+```text
+data/{train,test,sample_submission}.csv        # Kaggle, ~1.5 GB combined
+reports/oof_tensor.csv                          # 4.0 MB, 33720 rows
+reports/_local_eval_gate_report.csv             # 72 KB, 32 rows
+reports/training_menu_v1.json                   # 3.6 KB
+reports/deep_cnn_*_validation_predictions.csv   # 5 files, 9.9 MB total
+checkpoints/track1_finetuned.pt                 # 3.4 MB
+cache/                                          # ~4.5 GB v18 prediction caches
+```
+
+Expected runtime on a single 16-core CPU + RTX-class GPU:
+
+```text
+make verify-submission   ~30 s   # pure NumPy re-blend
+make ablation            ~3 min  # lag regen 9 s + SSL inference 1 s + aggregation
+make test                ~10 s   # pytest unit tests
+make cv-fast             ~5 min  # 1-fold CV smoke train
+```
+
+CPU-only path: `make verify-submission` and `make test` are pure CPU. `make
+cv-fast` is CPU. `make ablation` needs CUDA only for the SSL inference step;
+if no GPU is present, comment out the `regen_ssl_oof.py` call in the
+`ablation` target and skip rows 7-9 of the 9-row ablation table.
+
+Failure modes:
+
+- **Missing `data/train.csv`** — `make verify-submission` exits with
+  `FileNotFoundError: data/train.csv`; download the 3 CSVs from the DM 114
+  Kaggle competition.
+- **Missing `cache/` directory** — `make phd-below075` exits before
+  producing the CSV with a clear path-not-found message; restore from the
+  v18 release assets per `ARTIFACTS.md`.
+- **SHA256 mismatch on any cache** — `make verify-submission` will compare
+  the regenerated CSV with the archived
+  `submission_phd_below075_20260522.csv` and report `max_abs_diff` greater
+  than `5e-16`; investigate which cache changed and restore the canonical
+  version.
+- **Tectonic not bundled** — `cd report && make` will auto-fetch tectonic
+  into `.tools/` on first run (needs network); subsequent runs are offline.
+  If `pdflatex` is already installed system-wide, the Makefile prefers it
+  over the bundled tectonic.
+
 ## Report Notes
 
 Use the validation report JSON and EDA summary for the Experiments section. A clean ablation sequence for the report is:

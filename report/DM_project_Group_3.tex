@@ -15,7 +15,7 @@
 \begin{document}
 \raggedbottom
 
-\title{Public-Leaderboard Multi-Track Ensembling for Drought Severity Forecasting (DM~114 Kaggle)}
+\title{Seasonal-Lag and Multi-Track Ensembling for Drought Severity Forecasting (DM~114 Kaggle)}
 
 \author{
 \IEEEauthorblockN{Team 3}
@@ -31,7 +31,7 @@ NYCU\\
 \begin{abstract}
 This paper presents the reported final solution of \textbf{Team 3} for the DM~114 (Spring 2026) Final Project Kaggle competition: predicting five future weekly drought severity scores (integer $0$--$5$) from 91 days of regional meteorological history. The Kaggle metric is the mean absolute error (MAE), and the public repository is \url{https://github.com/RaisoLiu/dm-114-finalproject}.
 
-Our selected submission achieves a public-leaderboard MAE of \textbf{0.7628}, a 10.6\% relative reduction over the prior team ceiling of $0.8534$. The method is a training-menu-driven multi-track ensemble. Its key empirical contribution is the use of a low-error-correlated signal --- a $\approx$6-year lagged score lookup at 2215 days whose per-region error correlation with the strongest gradient-boosted decision tree (GBDT) anchor was reported as $\rho = 0.107 \pm 0.027$ in 5-fold region CV --- which helped the team move below the observed public-leaderboard MAD--MAE trend. The artefact is regenerated as a cached-prediction re-blend by the single command \texttt{make phd-below075}, and the GitHub repository linked above contains a runnable \texttt{README.md}.
+The submission blends a six-leg gradient-boosted decision tree (GBDT) anchor over two feature families (b91, pl), an autoregressive seasonal-lag lookup at a $\approx$6-year period (2215 d), a weather-only dilated 1-D CNN, and an SSL-pretrained Transformer; weights ($A{=}0.20$, $B{=}0.45$, $C{=}0.25$, $D{=}0.10$) come from a single training menu and are followed by a public-slice affine-and-clip calibration. The selected submission achieves a public-leaderboard MAE of \textbf{0.7628}, a 10.6\% relative reduction over the prior team ceiling of $0.8534$. Section~\ref{sec:ortho} reports the iter4 recomputed per-region residual correlations of each non-GBDT leg with the GBDT anchor (lag-2215: $\rho{=}0.51$ with 95\% CI $[0.485, 0.533]$; CNN: $\rho{=}0.54$; SSL: $\rho{=}0.33$, lowest), and Table~\ref{tab:t5} is the controlled OOF-aligned 9-row ablation that decomposes the method components. The artefact is regenerated as a cached re-blend by \texttt{make phd-below075}, byte-verified against the archived CSV by \texttt{make verify-submission}; the cross-leg correlations and the 9-row ablation are reproduced by \texttt{make ablation}.
 \end{abstract}
 
 \section{Project Summary}
@@ -43,7 +43,7 @@ For each of $R=2{,}248$ regions, the training table \texttt{train.csv} provides 
 Random train/validation splits are invalid here. Within a region the score series exhibits strong autocorrelation (mean per-region lag-7 autocorrelation $> 0.7$) and a dominant multi-year periodic component (Section~\ref{sec:periodicity}), so a randomly held-out anchor sees its own immediate future leak through the training set. All experiments therefore use a \emph{time-based, leakage-safe} validation split that respects the 91-day input window and the public-leaderboard slice's position within the 6-year drought cycle.
 
 \subsection{High-level method}
-After fifteen structurally distinct attempts hit the same empirical ceiling, we found two signal families with low available error correlation evidence: (i) a pure lag-2215~d score lookup whose error correlation with the strongest single-model anchor was estimated near $\rho\approx 0.107$ in 5-fold region CV, and (ii) weather-only deep models trained without score input. Blending these with the anchor under a competition-calibrated affine post-processor produces the final $0.7628$ public-MAE artefact, captured in one JSON ``training menu'' and reproduced by \texttt{make phd-below075}.
+After fifteen structurally distinct attempts hit the same empirical ceiling, we identified two complementary signal families: (i) an autoregressive seasonal-lag baseline at $2215$\,d --- a memorised historical-label lookup over \texttt{train.csv} only, no external data --- targeting the $\approx$6-year cycle, and (ii) weather-only deep models (a dilated 1-D CNN and an SSL-pretrained Transformer) trained without score input. The training menu's premise that lag-2215 was the most orthogonal signal (originally estimated at $\rho\approx 0.107$ in a 5-fold region-CV that did not preserve aligned per-row predictions) was re-audited in iter4 with regenerated aligned OOF predictions: the SSL Transformer is now the least-correlated leg with the GBDT anchor ($\rho{=}0.33$), while lag-2215 and CNN sit around $\rho{\approx}0.5$ (Section~\ref{sec:ortho}). Family diversity, rather than a single ultra-low-$\rho$ leg, drives the blend gain. Blending these legs with the anchor under a public-slice affine-and-clip calibration produces the final $0.7628$ public-MAE artefact, captured in one JSON ``training menu'' and reproduced by \texttt{make phd-below075}.
 
 \section{Related Work}
 
@@ -89,7 +89,7 @@ Five horizon-specific models are trained (one per $h$). The motivation is twofol
 The final prediction blends four legs with weakly correlated errors:
 \begin{itemize}
 \item \textbf{Anchor (ext150)}: a 1071-feature GBDT ensemble (LightGBM + HistGradientBoosting, multiple seeds), followed by the \emph{extrapolate-150} sharpening transform that re-projects predictions toward the empirical $0$--$5$ tails. Public MAE alone: $0.8534$.
-\item \textbf{Track 2 (Lag legs)}: pure-memory lookups at $\{1820, 2184, 2215, 2367\}$ days, with a light GBDT residual correction. The 2215-day leg is the lowest-correlated signal found in the available project evidence.
+\item \textbf{Track 2 (Lag legs)}: autoregressive seasonal lookups at $\{1820, 2184, 2215, 2367\}$ days over the historical-label series in \texttt{train.csv}, with a light GBDT residual correction. The 2215-day leg targets the dominant $\approx$6-year ACF peak; its iter4 per-region residual correlation with the GBDT anchor is $\rho{=}0.51$ (Section~\ref{sec:ortho}).
 \item \textbf{Track 3 (Dilated CNN)}: a 1-D dilated causal convolutional encoder over the 91-day weather sequence, trained with Huber loss and a region embedding.
 \item \textbf{Track 1 (SSL Transformer)}: a Time-MAE-style self-supervised Transformer pre-trained on weather-only 91-day sequences and fine-tuned with test-time training (TTT) to mitigate the OOD shift in the \texttt{cutoff\_age} feature.
 \end{itemize}
@@ -193,13 +193,13 @@ Simple-mean ensemble & 0.3910 & 0.3656 & 0.3839 & 0.4023 & 0.3937 & 0.4096 \\
 \end{tabular}}
 \end{table}
 
-\subsection{Public submission trajectory}
+\subsection{Public submission trajectory and controlled ablation}
 \label{sec:exp_ablation}
-Table~\ref{tab:t4} reports the public-leaderboard submission trajectory. Each row is a single uploaded artefact from the \path{reports/_local_eval_gate_report.csv} ledger, so the deltas are not a controlled held-out ablation. They show the order in which public submissions improved: lag and deep-track blends moved below the 0.8534 anchor, while the final affine + clip step is best interpreted as competition calibration with explicit private-leaderboard risk.
+Table~\ref{tab:t4} reports the public-leaderboard submission trajectory: each row is a single uploaded artefact from the \path{reports/_local_eval_gate_report.csv} ledger, so the deltas are \emph{not} a controlled held-out ablation. The controlled OOF-aligned ablation that decomposes the same nine method components is Table~\ref{tab:t5}; we retain the trajectory because three of its rows have public-leaderboard ground truth that the OOF tensor cannot supply.
 
 \begin{table}[t]
 \centering
-\caption{Public submission trajectory. ``$\Delta$'' is the public-MAE change versus the row above, not a controlled validation-set ablation. Configurations are sourced from \protect\path{reports/_local_eval_gate_report.csv}.}
+\caption{Public submission trajectory --- chronological record of uploaded public submissions, not a controlled validation-set ablation. ``$\Delta$'' is the public-MAE change vs.\ the row above. The aligned-OOF controlled ablation that decomposes the same component stack is Table~\ref{tab:t5}. Configurations are sourced from \protect\path{reports/_local_eval_gate_report.csv}.}
 \label{tab:t4}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{lrr}
@@ -215,9 +215,31 @@ ext150 anchor (1071-feat GBDT + extrapolate-150) & 0.8534 & --- \\
 \end{tabular}}
 \end{table}
 
+\begin{table}[t]
+\centering
+\caption{Controlled OOF-aligned 9-row ablation (iter4). All rows are evaluated on the same $33{,}720$-row OOF tensor ($6{,}744$ anchors $\times$ 5 horizons) produced by \protect\path{scripts/build_ablation_9row.py}. ``Public MAE'' is filled when an uploaded checkpoint matches the configuration; ``---'' otherwise. The opposite ordering of OOF vs.\ public MAE between rows 8 (no affine) and 9 (affine+clip, the final) is direct evidence that the affine-and-clip step is public-slice calibration --- it trades OOF accuracy for proximity to the public severity plateau (Threat~(iv), Section~\ref{sec:tov}).}
+\label{tab:t5}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrr}
+\toprule
+Configuration & OOF MAE & Public MAE \\
+\midrule
+1. Weather-only single GBDT (best of 6 legs) & 0.3753 & --- \\
+2. Lag-2215 baseline (autoregressive lookup) & 0.9673 & --- \\
+3. Lag-2215 + per-horizon bias correction & 1.0694 & --- \\
+4. GBDT anchor (6-leg b91+pl blend) & 0.3910 & 0.8534 \\
+5. GBDT + lag (A+C renormalised, $0.44A+0.56C$) & 0.6840 & --- \\
+6. GBDT + lag + CNN (Track 3) & 0.5389 & 0.8017 \\
+7. GBDT + lag + CNN + SSL Transformer & 0.5523 & 0.7952 \\
+8. Full blend, no affine/clip ($0.2A+0.45B+0.25C+0.1D$) & 0.5325 & --- \\
+9. Full blend + affine + clip 3.0 (final) & 0.5766 & \textbf{0.7628} \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
 \subsection{Multi-year periodicity}
 \label{sec:periodicity}
-Figure~\ref{fig:periodicity} reports, from real data, the multi-year periodicity that the lag legs exploit. Panel (a) shows the distribution of the dominant FFT period across all 2,248 regions: a clear mass appears in the 5--8\,year band (highlighted in red), and a separate mass at $\approx 15$\,years corresponds to a harmonic of the same underlying cycle. Panel (b) plots the raw weekly score series for two example regions, which visibly oscillate on a multi-year envelope. Panel (c) quantifies the per-region distribution of the dominant period: $\sim$30\% of regions fall in the 5--8\,year band that our lag-2215 leg targets, and a similar fraction sits at the $\geq 12$-year harmonic. (Note: the panel does \emph{not} claim a per-region ACF at exactly 2215 days; the 5-fold cross-validated orthogonality figure $\rho = 0.107 \pm 0.027$ is reported separately in Iteration 2 of our review.)
+Figure~\ref{fig:periodicity} reports, from real data, the multi-year periodicity that the lag legs exploit. Panel (a) shows the distribution of the dominant FFT period across all 2,248 regions: a clear mass appears in the 5--8\,year band (highlighted in red), and a separate mass at $\approx 15$\,years corresponds to a harmonic of the same underlying cycle. Panel (b) plots the raw weekly score series for two example regions, which visibly oscillate on a multi-year envelope. Panel (c) quantifies the per-region distribution of the dominant period: $\sim$30\% of regions fall in the 5--8\,year band that our lag-2215 leg targets, and a similar fraction sits at the $\geq 12$-year harmonic. The panel does \emph{not} claim a per-region ACF at exactly 2215 days; the recomputed iter4 per-region residual correlations between non-GBDT legs and the GBDT anchor are reported in Section~\ref{sec:ortho}.
 
 \begin{figure}[t]
 \centering
@@ -234,17 +256,26 @@ The bootstrap restricted to the 29 pre-v18 rows only also gives a slope near $0.
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/fig2_slope.pdf}
-\caption{Observed slope trend on real submission data. Each marker is one Kaggle upload from the 32-row \protect\path{reports/_local_eval_gate_report.csv} gate ledger. Dashed line: submission-row bootstrap-fitted slope on all 32 rows ($0.20$, 95\% CI $[0.05, 0.26]$, shaded band B=1000). Dotted line: bootstrap-fitted slope on the 29 pre-v18 rows only ($0.21$). Solid grey line: ext150 ceiling $0.8534$. v18+ candidates (orange triangles) are the first uploads in this ledger to drop below the bootstrap-fitted line, with the lowest sitting at $0.7952$.}
+\caption{Observed slope trend on real submission data. Each marker is one Kaggle upload from the 32-row \protect\path{reports/_local_eval_gate_report.csv} gate ledger. Dashed line: submission-row bootstrap-fitted slope on all 32 rows ($0.20$, 95\% CI $[0.05, 0.26]$, shaded band B=1000). Dotted line: bootstrap-fitted slope on the 29 pre-v18 rows only ($0.21$). Solid grey line: ext150 ceiling $0.8534$. v18+ candidates (orange triangles) are the first uploads in this ledger to drop below the bootstrap-fitted line, with the lowest sitting at $0.7952$. The final affine-and-clip 0.7628 submission is excluded from this slope plot because affine post-processing makes the MAD axis non-comparable; see Fig.~\ref{fig:trajectory} and Table~\ref{tab:t4} for the full trajectory.}
 \label{fig:slope}
 \end{figure}
 
 \subsection{Cross-leg residual correlation (real OOF)}
-Figure~\ref{fig:ortho} is the real $6{\times}6$ region-mean residual correlation matrix computed by \texttt{scripts/report\_stats.py} on the 33,720-row OOF tensor (\path{reports/oof_tensor.csv}). Two clean blocks are visible: within the $b91$ family ($\rho{\approx}0.98$ across LGBM/HGB seeds) and within the $pl$ family ($\rho{\approx}0.98$), with the cross-family correlation only $\rho{\approx}0.79\text{--}0.82$. This is the directly reproducible justification for keeping both tabular feature families in the ensemble. The stronger low-correlation claim for $\rho = 0.107 \pm 0.027$ comes from a separate 5-fold region-CV result involving the lag-2215 and weather-only deep legs, reported in \path{reports/data_characteristics_v1.md}; because those aligned OOF predictions were not preserved, we treat that number as supporting evidence rather than a fully recomputable claim. Bootstrap intervals in this report follow the resampling procedure of Efron~\cite{efron1979bootstrap}.
+\label{sec:ortho}
+Figure~\ref{fig:ortho} is the real $6{\times}6$ region-mean residual correlation matrix on the $33{,}720$-row OOF tensor (\path{reports/oof_tensor.csv}). Two clean blocks are visible: within the $b91$ family ($\rho{\approx}0.98$ across LGBM/HGB seeds) and within the $pl$ family ($\rho{\approx}0.98$), with the cross-family value only $\rho{\approx}0.79\text{--}0.82$. This is the directly reproducible justification for keeping both tabular feature families in the ensemble.
+
+For the cross-\emph{family} residual correlation against the GBDT anchor (the lag-2215, CNN, and SSL legs vs.\ the 6-leg anchor), iter4 regenerates the missing OOF predictions for the lag-2215 lookup (\path{scripts/regen_lag_2215_oof.py}, deterministic over \texttt{train.csv}; runtime $\approx 9$\,s) and for the SSL Transformer (\path{scripts/regen_ssl_oof.py}, single-pass forward of \texttt{checkpoints/track1\_finetuned.pt} on the same $6{,}744$ validation anchors; runtime $\approx 1$\,s on GPU). Per-region Pearson correlation between $r_{\text{leg}}=y-\hat y_{\text{leg}}$ and $r_{\text{anchor}}=y-\hat y_{\text{anchor}}$ is then resampled across regions (B=1000, \path{scripts/compute_cross_leg_rho.py}, following Efron~\cite{efron1979bootstrap}):
+\begin{itemize}
+\item lag-2215: mean $\rho = 0.51$, 95\% CI $[0.485, 0.533]$ ($n{=}1{,}374$ regions with $\geq 3$ valid pairs);
+\item CNN (mean of 5 cached Track-3 runs): mean $\rho = 0.54$, 95\% CI $[0.524, 0.562]$ ($n{=}2{,}248$);
+\item SSL Transformer: mean $\rho = 0.33$, 95\% CI $[0.311, 0.349]$ ($n{=}2{,}248$).
+\end{itemize}
+The SSL Transformer is the least-correlated leg with the GBDT anchor, not lag-2215. The earlier training-menu figure ``$\rho = 0.107 \pm 0.027$'' for lag-2215 (from \path{reports/data_characteristics_v1.md}) was computed under a different aggregation that the original artefacts no longer permit auditing; the iter4 recomputation above supersedes it. Cached file SHA256 hashes are in \path{ARTIFACTS.md}.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/fig3_orthogonality.pdf}
-\caption{Real $6{\times}6$ region-mean residual correlation matrix for the 6 OOF GBDT legs (2{,}248 regions, computed from \protect\path{reports/oof_tensor.csv}). The two $\approx 0.98$ on-diagonal blocks correspond to the $b91$ and $pl$ feature families; the off-diagonal $\approx 0.80$ value is the within-tabular ensemble diversity. Cross-leg correlation evidence $\rho = 0.107 \pm 0.027$ for the lag-2215 leg (5-fold region CV) is reported in \protect\path{reports/data_characteristics_v1.md} and is not directly recomputable here because that leg's OOF predictions were not preserved on disk.}
+\caption{Real $6{\times}6$ region-mean residual correlation matrix for the 6 OOF GBDT legs (2{,}248 regions, computed from \protect\path{reports/oof_tensor.csv}). The two $\approx 0.98$ within-family blocks correspond to the $b91$ and $pl$ feature families; the off-diagonal $\approx 0.80$ value is the within-tabular ensemble diversity. Recomputed cross-\emph{family} residual correlations of the lag-2215, CNN, and SSL Transformer legs against the 6-leg GBDT anchor are reported in Section~\ref{sec:ortho}.}
 \label{fig:ortho}
 \end{figure}
 
@@ -259,14 +290,14 @@ We list four threats and the evidence that bounds each.
 
 \emph{(ii) Slope-trend point estimate.} The submission-row bootstrap CI on the slope (B=1000) excludes zero ($[0.05, 0.26]$), supporting a positive association in the 32-upload ledger. Because the uploads were adaptively chosen, this is descriptive evidence rather than a controlled statistical test.
 
-\emph{(iii) Orthogonality claim $\rho=0.107$.} The OOF predictions for the lag-2215 leg and the SSL Transformer are not preserved on disk, so we cannot bootstrap $\rho$ from scratch here. We instead cite the 5-fold region-CV figure $\rho = 0.107 \pm 0.027$ from \texttt{reports/data\_characteristics\_v1.md}, which is itself an interval estimate (5 fold means $\pm$ 1 standard deviation), and we report the real $6{\times}6$ within-GBDT residual correlation matrix (Fig.~\ref{fig:ortho}) as the data-grounded part of the orthogonality story.
+\emph{(iii) Orthogonality claim (iter4 update).} The iter4 recomputation supersedes the earlier $\rho = 0.107 \pm 0.027$ figure from \texttt{reports/data\_characteristics\_v1.md}: the regenerated and row-aligned OOF predictions for the lag-2215 leg and the SSL Transformer now allow a direct, bootstrap-CI bounded per-region Pearson computation (Section~\ref{sec:ortho}). The new values are $\rho{=}0.51$ (lag-2215), $0.54$ (CNN), $0.33$ (SSL). The lower SSL value most plausibly explains the SSL leg's positive contribution in Table~\ref{tab:t5}; lag-2215 contributes primarily through label-distribution coverage rather than residual independence.
 
-\emph{(iv) Public/private regime shift.} The 0.7628 result was achieved by tuning on public-test-like CV folds (high-severity phase, target mean $\approx 1.21$). If the private leaderboard slice lands in a low-severity phase of the 6-year cycle, the lag-leg contribution attenuates and the GBDT anchor dominates. We deliberately keep $\geq 60\%$ blend weight on the anchor to bound this risk; we do not state a numeric private-LB prediction.
+\emph{(iv) Public/private regime shift.} The 0.7628 result was achieved by tuning on public-test-like CV folds (high-severity phase, target mean $\approx 1.21$). If the private leaderboard slice lands in a low-severity phase of the 6-year cycle, the lag-leg contribution attenuates and the GBDT anchor dominates. We deliberately keep $\geq 60\%$ blend weight on the anchor to bound this risk; we do not state a numeric private-LB prediction. Direct evidence that the final affine-and-clip step is a \emph{public-slice calibration} rather than a general-purpose improvement comes from Table~\ref{tab:t5}: the full blend without affine/clip (row 8) has OOF MAE $0.5325$, while the affine-and-clip variant (row 9) has OOF MAE $0.5766$ --- worse on the OOF tensor --- yet wins on public ($0.7628$). The step trades OOF accuracy for proximity to the public severity plateau and is therefore a competition-calibration step with explicit private-LB risk.
 
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{figures/fig4_cv_generalization.pdf}
-\caption{5-fold region CV evidence (panels reproduced from \texttt{reports/plots/cv1...cv4*.png}). (a) Calibration OOF scatter (RMSE 0.015 between in-sample and OOF predictions); (b) lag-$\rho$ stability across folds (mean $\approx 0.107$, std $\approx 0.027$); (c) in-sample vs.\ OOF blend MAE ratio $\approx 1.001$ for the chosen weights; (d) per-fold final-candidate MAE for the 0.7628 blend. These diagnostics suggest the chosen weights are not driven by a single fold, but they are not a substitute for private-leaderboard validation.}
+\caption{5-fold region CV evidence (panels reproduced from \texttt{reports/plots/cv1...cv4*.png}). (a) Calibration OOF scatter (RMSE 0.015 between in-sample and OOF predictions); (b) lag-$\rho$ stability across folds as recorded in the original CV run (the underlying $\rho{\approx}0.107$ figure is superseded by the iter4 recomputation in Section~\ref{sec:ortho}; the panel is retained as historical context for the design choice); (c) in-sample vs.\ OOF blend MAE ratio $\approx 1.001$ for the chosen weights; (d) per-fold final-candidate MAE for the 0.7628 blend. These diagnostics suggest the chosen weights are not driven by a single fold, but they are not a substitute for private-leaderboard validation.}
 \label{fig:cv}
 \end{figure*}
 
@@ -298,7 +329,7 @@ PYTHONPATH=src python \
   --menu reports/training_menu_v1.json \
   --fixed \
   --out submissions/submission_\
-       phd_below075_$(date +%Y%m%d).csv
+       phd_below075_20260522.csv
 \end{verbatim}
 \end{footnotesize}
 \caption{The two commands executed by \texttt{make phd-below075}. This is the cached re-blend path used to reproduce the uploaded CSV; \texttt{make verify-submission} compares the output against the archived artefact.}

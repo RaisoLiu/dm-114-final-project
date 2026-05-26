@@ -3,9 +3,11 @@ PYTHONPATH := src
 LATEST_SUBMISSION := $(shell ls -t submissions/*.csv 2>/dev/null | head -n 1)
 UPLOADED_SUBMISSION := submissions/submission_phd_below075_20260522.csv
 VERIFY_SUBMISSION_OUT ?= /tmp/dm114_verify_submission.csv
-PHD_SUBMISSION := submissions/submission_phd_below075_$(shell date +%Y%m%d).csv
+# Hardcoded to match the archived uploaded submission so `make phd-below075`
+# output is byte-comparable with `make verify-submission` on any day.
+PHD_SUBMISSION := submissions/submission_phd_below075_20260522.csv
 
-.PHONY: venv test check-data eda baselines cv-fast cv train-fast train validate-latest phd-below075 verify-submission artifacts clean
+.PHONY: venv test check-data eda baselines cv-fast cv train-fast train validate-latest phd-below075 verify-submission artifacts ablation clean
 
 venv:
 	python3 -m venv .venv
@@ -59,6 +61,15 @@ verify-submission:
 
 artifacts:
 	$(PYTHON) scripts/write_artifacts_manifest.py
+
+ablation:
+	@echo "=== Regenerating lag-2215 and SSL OOF predictions (Phase 1 + Phase 2) ==="
+	PYTHONPATH=$(PYTHONPATH) python3 scripts/regen_lag_2215_oof.py
+	PYTHONPATH=$(PYTHONPATH) python3 scripts/regen_ssl_oof.py
+	@echo "=== Building 9-row controlled ablation + cross-leg rho bootstrap ==="
+	python3 scripts/build_ablation_9row.py
+	python3 scripts/compute_cross_leg_rho.py
+	@echo "=== Done. Outputs: reports/ablation_9row.{csv,md}, reports/cross_leg_rho_bootstrap.json ==="
 
 clean:
 	find . -path ./.venv -prune -o -type d -name __pycache__ -prune -exec rm -rf {} +

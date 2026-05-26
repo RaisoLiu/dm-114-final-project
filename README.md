@@ -190,6 +190,11 @@ PYTHONPATH=src python scripts/analyze_data_distribution.py --emit-menu
 
 This produces `reports/data_characteristics_v1.md`, `data_insights.json`, and the **training menu** `training_menu_v1.json` (the "菜單").
 
+> Note on flags: `--emit-menu` writes the training-menu JSON from cached per-region
+> features. The `phd-below075` Make target uses `--force-synthesis --emit-menu`;
+> `--force-synthesis` re-emits the menu even if a cached version exists; it does
+> **not** synthesize new labels or new submissions.
+
 Then the one-command cached re-blend path to the final submission family is:
 
 ```bash
@@ -202,9 +207,64 @@ To audit the archived upload exactly, run:
 make verify-submission
 ```
 
-This regenerates `/tmp/dm114_verify_submission.csv`, validates its schema, and compares it with `submissions/submission_phd_below075_20260522.csv`, reporting maximum absolute and ULP differences.
+This regenerates `/tmp/dm114_verify_submission.csv`, validates its schema, and compares it with `submissions/submission_phd_below075_20260522.csv`, reporting maximum absolute and ULP differences (expected max abs diff ≤ `5e-16`).
 
-`ARTIFACTS.md` lists the retained data/cache/report artefacts with SHA256 hashes, producer, and consumer. Several required caches are large, so a clean clone must either include them via Git LFS/release assets or restore them into the paths listed in `ARTIFACTS.md` before running the final verification.
+To reproduce the controlled 9-row OOF ablation table and the cross-leg residual-correlation bootstrap that the iter4 report cites in §Cross-leg residual correlation and Table V:
+
+```bash
+make ablation
+```
+
+This runs `scripts/regen_lag_2215_oof.py` (deterministic lag-2215 lookup, ~9 s CPU), `scripts/regen_ssl_oof.py` (single forward pass of `checkpoints/track1_finetuned.pt`, ~1 s GPU), then `scripts/build_ablation_9row.py` and `scripts/compute_cross_leg_rho.py`. Outputs land in `reports/ablation_9row.{csv,md}` and `reports/cross_leg_rho_bootstrap.json`.
+
+### Cache checksums (iter4)
+
+A clean clone needs these artefacts in place before `make verify-submission` and `make ablation` will work. Full producer/consumer cross-reference is in `ARTIFACTS.md`; the SHA256 hashes below are inline so a TA can audit cache integrity directly:
+
+```text
+2f5ed136f8106dc79222d636b37bd697bdedec5e4df5744a036419645158ed96  reports/oof_tensor.csv
+2fe0767025259be39ab6078a59ecb4215f1c413349604a8799ea0890abc0f8ab  reports/_local_eval_gate_report.csv
+4885b0c9f003329aa1f561601521d78e0e4bbb42e53c069e0d2e18ba7a8bbd21  reports/training_menu_v1.json
+7a08544303e1be5072f5e9d93dc63f20d8d218b6a35fd97829ad9b7763143deb  reports/lag_2215_oof_validation_predictions.csv
+352f23dbf6b960f97258a9112e56358790ca3bdeabfeebf60ab2456e04377fe7  reports/track1_ssl_oof_validation_predictions.csv
+64aa928b769063fd45ba5b85170434791aa10476d89febedb483065083d5b1c7  reports/ablation_9row.csv
+9b0818e97b2238c8c5747ae0efcfb47450a942845dedb687b2b71eb6c556a21f  reports/cross_leg_rho_bootstrap.json
+1b7f6ab6484673901eb433c1fa69a4656648c68156253298a712117988a97540  submissions/submission_phd_below075_20260522.csv
+```
+
+Several caches under `cache/` (Track 3 CNN and Track 1 SSL prediction caches; ≈ 4.5 GB) and `checkpoints/track1_finetuned.pt` are required for re-running `make ablation`; if missing, restore from the v18 release assets per `ARTIFACTS.md`. `data/train.csv`, `data/test.csv`, and `data/sample_submission.csv` are downloaded directly from the DM 114 Kaggle competition.
+
+### Clean-clone reproduction walkthrough
+
+For a TA verifying that the report, code, and Kaggle result are consistent:
+
+```bash
+git clone https://github.com/RaisoLiu/dm-114-finalproject.git
+cd dm-114-finalproject
+
+# 1. Python environment
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+
+# 2. Data + caches
+#    a. Place data/train.csv, data/test.csv, data/sample_submission.csv from
+#       the DM 114 (Spring 2026) Kaggle competition under data/
+#    b. Restore the cache/ directory and checkpoints/track1_finetuned.pt per
+#       ARTIFACTS.md; verify with the SHA256 block above
+
+# 3. Verify the uploaded submission byte-matches the cached re-blend
+make verify-submission
+
+# 4. Optional: reproduce the iter4 controlled ablation
+make ablation
+
+# 5. Optional: rebuild the report PDF
+cd report && make clean && make && make check
+```
+
+If `make verify-submission` reports `max abs diff ≤ 5e-16` and `make check` reports
+all spec strings present, the cached re-blend pipeline matches the uploaded
+submission and the report build is reproducible.
 
 ## Report Notes
 

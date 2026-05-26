@@ -266,6 +266,25 @@ If `make verify-submission` reports `max abs diff ≤ 5e-16` and `make check` re
 all spec strings present, the cached re-blend pipeline matches the uploaded
 submission and the report build is reproducible.
 
+### Layer-2 smoke test (optional)
+
+The walkthrough above (`make verify-submission`, `make ablation`) verifies the
+cached re-blend pipeline. To also confirm the *training* pipeline is not just a
+black box of cached predictions, two existing lightweight targets exercise the
+actual training and validation code paths:
+
+```bash
+make test         # pytest: 91-day window, weekly target alignment, submission schema, OOD edge cases
+make cv-fast      # 1-fold fast cross-validation on the GBDT pipeline (a few minutes CPU)
+```
+
+These do not retrain the v18 models from scratch — that would require the full
+GPU pipeline documented in `ARTIFACTS.md` — but they prove the supervised
+training, the windowing, and the validation harness all execute against real
+`data/train.csv`. Combined with `make verify-submission` (layer 1) and
+`make ablation` (layer 3, regenerates lag-2215 OOF + SSL inference + 9-row
+ablation), this gives an end-to-end reproducibility ladder.
+
 ## Report Notes
 
 Use the validation report JSON and EDA summary for the Experiments section. A clean ablation sequence for the report is:

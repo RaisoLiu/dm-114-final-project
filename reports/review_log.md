@@ -187,3 +187,30 @@ Scope of each iteration is set by the approved plan at `~/.claude/plans/system-i
 - 🔴 GitHub repo `https://github.com/RaisoLiu/dm-114-finalproject` still returns 404 (unauthenticated). Remote has commits ready to push but the GitHub-side repo must be created/made public before June 10.
 - 🔴 Kaggle Display Name must be exactly `Team 3`. Must be confirmed in Kaggle UI.
 - ⚠️  ~80 experiment scripts referenced by the report (`scripts/analyze_data_distribution.py`, `scripts/multi_blend_grid.py`, `scripts/local_eval_gate.py`, `scripts/track*.py`, etc.) remain untracked on the remote git tree, consistent with the prior iter3 commit's narrow scope. Before the GitHub repo is "runnable per spec", the user should decide whether to commit these in a follow-up.
+
+---
+
+## Iteration 5 — 2026-05-26  (response to second external reviewer critique of `iter4_stamped.pdf`)
+
+### Reviewer critique observed (paraphrased, full text in `review/iter4_review.md`)
+- iter4 considered close to submittable but reviewer flagged 3 hard risks: GitHub 404 (still), cached-only reproducibility lacks training smoke test, anchor-weight inconsistency in Threats (iv).
+- Specific bugs: `memorised historical-label lookup` (L46) and `pure-memory lookup` (L54) wording is rule-edge risky; `--force-synthesis` appears in Fig 6 verbatim without PDF-level explanation; `≥60% blend weight on the anchor` claim contradicts training menu's A=0.20.
+- Suggested adding a private-safe variant note (2-submission Kaggle selection).
+
+### Actions taken
+- **Anchor-weight bug fix (critical)**: Threats (iv) rewritten to list actual convex weights A=0.20 / B=0.45 / C=0.25 / D=0.10 from `reports/training_menu_v1.json`. Removed the wrong `≥60% anchor` claim. Reframed safety story: lag is only 25%, the remaining 75% is weather-driven (A+B+D).
+- **Wording softening**: `memorised historical-label lookup` (L46) → `using only the provided historical training labels in train.csv, with no test labels, no external labels, and no external data`. `pure-memory lookup at the data-generating period` (L54) → `seasonal autoregressive component aligned with the observed multi-year periodicity`.
+- **Fig 6 caption**: appended PDF-level `--force-synthesis` disambiguation: "triggers training-menu re-emission from cached per-region features; it does not synthesise labels, predictions, or submissions (see README flag glossary)".
+- **Private-safe variant note**: appended to Threats (iv): "If Kaggle's automatic two-submission selection allows it, the no-affine 7-way row of Table~IV (public MAE 0.7952) is the natural private-LB-conservative sibling to the 0.7628 final."
+- **README layer-2 smoke test section** added: surfaces existing `make test` (pytest) and `make cv-fast` (1-fold CV) as the training-pipeline-not-just-cached-blackbox proof.
+- Rebuild + checks all pass: A4, 8 pages, `make check` ✓, `make verify-submission` max abs diff 4.4e-16 ✓.
+- iter5 PDF snapshot: `reports/DM_project_Group_3_iter5.pdf` (SHA `6b530094...`).
+
+### Pushbacks (reviewer suggestions declined)
+- **Reviewer**: rename `--force-synthesis` flag. **Pushback**: same as iter3 round, cosmetic. Renaming would touch script, Makefile, manifest, and cached menu references. Added a Fig-6-caption disambiguation as a compromise so a PDF-only reader sees it.
+
+### Outstanding human-only blockers (unchanged)
+- 🔴 GitHub repo `https://github.com/RaisoLiu/dm-114-finalproject` still returns 404. Push remote `dd961f3` (iter4) + this round's commit + make repo public.
+- 🔴 Kaggle Display Name must be exactly `Team 3`.
+- 🔴 Verify Kaggle final-selected submissions: ideally `submission_phd_below075_20260522.csv` (0.7628) + the no-affine 0.7952 sibling for a public-aggressive/private-conservative pair.
+- ⚠️  ~80 experiment scripts referenced by the report still untracked on remote git tree (see iter4 entry for the list of critical ones).

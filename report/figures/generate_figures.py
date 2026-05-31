@@ -123,19 +123,18 @@ def create_fig4_cv_generalization():
     uses \\begin{figure*} ... \\includegraphics[width=\\textwidth] to span
     both columns."""
     height = set_ieee_figure_style(IEEE_FULL_WIDTH_INCH)
-    # 2x2 grid at 7" wide → each panel ≈ 3.5" wide, readable
-    fig = plt.figure(figsize=(IEEE_FULL_WIDTH_INCH, IEEE_FULL_WIDTH_INCH * 0.55))
-    gs = GridSpec(2, 2, figure=fig, hspace=0.18, wspace=0.10)
+    # 1x3 row at 7" wide → each panel ≈ 2.33" wide, larger than the old 2x2
+    fig = plt.figure(figsize=(IEEE_FULL_WIDTH_INCH, IEEE_FULL_WIDTH_INCH * 0.34))
+    gs = GridSpec(1, 3, figure=fig, wspace=0.10)
 
     plots = [
         ('cv1_calibration_oof.png', '(a) Calibration OOF'),
         ('cv2_lag_rho_per_fold.png', '(b) Lag-ρ Stability'),
-        ('cv3_in_vs_oof_mae.png', '(c) Blend Weight Robustness'),
-        ('cv4_final_per_fold_mae.png', '(d) Final Candidate Stability'),
+        ('cv4_final_per_fold_mae.png', '(c) Final Candidate Stability'),
     ]
 
     for idx, (fname, title) in enumerate(plots):
-        ax = fig.add_subplot(gs[idx // 2, idx % 2])
+        ax = fig.add_subplot(gs[idx])
         src = REPORTS_PLOTS / fname
         if src.exists():
             img = plt.imread(src)

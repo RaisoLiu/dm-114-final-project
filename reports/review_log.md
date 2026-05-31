@@ -303,3 +303,18 @@ Scope of each iteration is set by the approved plan at `~/.claude/plans/system-i
 - ✅ Kaggle Display Name `Team 3` confirmed (iter6 screenshot).
 - ✅ Kaggle two selected submissions confirmed (iter8).
 - ⚠️ ~80 experiment scripts referenced by the report still untracked on remote git tree.
+
+---
+
+## Iteration 10 — 2026-05-26  (Figure 4 trimmed to 3 panels + Figure 6 removed)
+
+### What changed (user request)
+- **Figure 4**: dropped panel (c) "Blend Weight Robustness" (cv3_in_vs_oof_mae). Kept Calibration OOF, Lag-ρ Stability, Final Candidate Stability, relabelled sequentially (a)(b)(c). Layout changed from 2×2 grid to 1×3 row at full text width (generate_figures.py), so each kept panel is larger. Caption updated (dropped the in-sample-vs-OOF-ratio clause; d→c).
+- **Figure 6 removed**: deleted the two-command verbatim float (fig:repro). The §Single-command cached re-blend prose was reworded to describe the two steps inline and point to README for exact commands. Side effect: `--force-synthesis` no longer appears anywhere in the PDF body (verified count 0); the flag stays documented in the README glossary.
+- Verified: no dangling \ref{fig:repro}; `make check` ✓; `make verify-submission` ✓ (max abs diff 4.4e-16); 8 pages A4 (7 content + references page; page numbers + refs-own-page from iter9 intact).
+- iter10 PDF snapshot: `reports/DM_project_Group_3_iter10.pdf`.
+
+### Outstanding human-only blockers (unchanged)
+- 🔴 GitHub repo `https://github.com/RaisoLiu/dm-114-final-project` still needs to be created public + remote commits pushed.
+- ✅ Kaggle Display Name `Team 3` confirmed (iter6); ✅ two Kaggle selected submissions confirmed (iter8).
+- ⚠️ ~80 experiment scripts referenced by the report still untracked on remote git tree.

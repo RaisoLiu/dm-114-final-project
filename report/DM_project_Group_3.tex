@@ -297,7 +297,7 @@ We list four threats and the evidence that bounds each.
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{figures/fig4_cv_generalization.pdf}
-\caption{5-fold region CV evidence (panels reproduced from \texttt{reports/plots/cv1...cv4*.png}). (a) Calibration OOF scatter (RMSE 0.015 between in-sample and OOF predictions); (b) lag-$\rho$ stability across folds as recorded in the original CV run (the underlying $\rho{\approx}0.107$ figure is superseded by the iter4 recomputation in Section~\ref{sec:ortho}; the panel is retained as historical context for the design choice); (c) in-sample vs.\ OOF blend MAE ratio $\approx 1.001$ for the chosen weights; (d) per-fold final-candidate MAE for the 0.7628 blend. These diagnostics suggest the chosen weights are not driven by a single fold, but they are not a substitute for private-leaderboard validation.}
+\caption{5-fold region CV evidence (panels reproduced from \texttt{reports/plots/cv*.png}). (a) Calibration OOF scatter (RMSE 0.015 between in-sample and OOF predictions); (b) lag-$\rho$ stability across folds as recorded in the original CV run (the underlying $\rho{\approx}0.107$ figure is superseded by the iter4 recomputation in Section~\ref{sec:ortho}; the panel is retained as historical context for the design choice); (c) per-fold final-candidate MAE for the 0.7628 blend. These diagnostics suggest the chosen weights are not driven by a single fold, but they are not a substitute for private-leaderboard validation.}
 \label{fig:cv}
 \end{figure*}
 
@@ -314,27 +314,7 @@ We list four threats and the evidence that bounds each.
 Python 3.11; the relevant pinned versions are \texttt{numpy} 1.26, \texttt{pandas} 2.1, \texttt{scikit-learn} 1.4, \texttt{lightgbm} 4.3, \texttt{matplotlib} 3.8. The complete environment is specified in the repository's \texttt{requirements.txt}.
 
 \subsection{Single-command cached re-blend of the 0.7628 submission}
-The uploaded artefact basename \path{submission_phd_below075_20260522.csv} lives under \path{submissions/}. It is regenerated from cached predictions and the training menu by \texttt{make phd-below075}, which expands to the two commands shown in Figure~\ref{fig:repro}. This target does not retrain every historical model from raw data; it reuses the retained v18/cache artefacts documented in \path{ARTIFACTS.md}.
-
-\begin{figure}[t]
-\centering
-\begin{footnotesize}
-\begin{verbatim}
-PYTHONPATH=src python \
-  scripts/analyze_data_distribution.py \
-  --force-synthesis --emit-menu
-
-PYTHONPATH=src python \
-  scripts/multi_blend_grid.py \
-  --menu reports/training_menu_v1.json \
-  --fixed \
-  --out submissions/submission_\
-       phd_below075_20260522.csv
-\end{verbatim}
-\end{footnotesize}
-\caption{The two commands executed by \texttt{make phd-below075}. This is the cached re-blend path used to reproduce the uploaded CSV; \texttt{make verify-submission} compares the output against the archived artefact. The \texttt{-{}-force-synthesis} flag triggers training-menu re-emission from cached per-region features; it does not synthesise labels, predictions, or submissions (see the repository \texttt{README.md} flag glossary).}
-\label{fig:repro}
-\end{figure}
+The uploaded artefact basename \path{submission_phd_below075_20260522.csv} lives under \path{submissions/}. It is regenerated from cached predictions and the training menu by \texttt{make phd-below075}, which chains two steps: re-emitting the training menu from cached per-region features, then producing the fixed-weight cached blend. This target does not retrain every historical model from raw data; it reuses the retained v18/cache artefacts documented in \path{ARTIFACTS.md}. The exact commands and flag glossary are in the repository \texttt{README.md}.
 
 \noindent The regenerated CSV matches the uploaded artefact with maximum absolute difference below $5\times10^{-16}$ in \texttt{make verify-submission}; all numerical comparisons in this report are stable at the 4-decimal precision used throughout.
 

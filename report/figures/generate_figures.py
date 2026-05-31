@@ -207,44 +207,87 @@ def main():
 
 
 def create_fig_overview():
-    """Task/data-flow schematic for the Project Summary (problem setup):
-    91-day weather window -> heterogeneous-ensemble model -> next 5 weekly
-    drought-severity scores. Single-column, horizontal flow."""
+    """Fig 1: single-column method architecture diagram."""
     from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 
     set_ieee_figure_style(IEEE_SINGLE_COL_INCH)
-    fig, ax = plt.subplots(figsize=(IEEE_SINGLE_COL_INCH, IEEE_SINGLE_COL_INCH * 0.50))
+    fig, ax = plt.subplots(figsize=(IEEE_SINGLE_COL_INCH, 2.15))
+    fig.subplots_adjust(left=0.015, right=0.985, bottom=0.085, top=0.975)
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis('off')
 
-    def box(x, y, w, h, text, fc):
+    def box(x, y, w, h, text, fc, ec='#374151', fs=6.7, weight='normal'):
         patch = FancyBboxPatch(
-            (x, y), w, h, boxstyle="round,pad=0.012",
-            linewidth=0.9, edgecolor='#333333', facecolor=fc,
+            (x, y), w, h,
+            boxstyle="round,pad=0.010,rounding_size=0.018",
+            linewidth=0.75, edgecolor=ec, facecolor=fc,
         )
         ax.add_patch(patch)
-        ax.text(x + w / 2, y + h / 2, text, ha='center', va='center', fontsize=7.2)
+        ax.text(
+            x + w / 2, y + h / 2, text,
+            ha='center', va='center', fontsize=fs,
+            fontweight=weight, linespacing=0.95, color='#111827',
+        )
 
-    # Input -> Model -> Output
-    box(0.015, 0.30, 0.30, 0.42, "91-day weather\nwindow\n(16 daily features)", '#eaf2fb')
-    box(0.395, 0.30, 0.23, 0.42, "Model\n(heterogeneous\nensemble)", '#fbeee0')
-    box(0.70, 0.30, 0.29, 0.42, "Next 5 weekly\nseverity scores\n(0-5)", '#e8f6ec')
+    def arrow(start, end, rad=0.0, color='#4b5563', lw=0.75):
+        ax.add_patch(FancyArrowPatch(
+            start, end,
+            arrowstyle='-|>', mutation_scale=7.2,
+            linewidth=lw, color=color, shrinkA=2, shrinkB=2,
+            connectionstyle=f'arc3,rad={rad}',
+        ))
 
-    solid = dict(arrowstyle='-|>', mutation_scale=9, linewidth=1.0, color='#333333')
-    dashed = dict(arrowstyle='-|>', mutation_scale=9, linewidth=1.0, color='#333333', linestyle=(0, (3, 2)))
-    ax.add_patch(FancyArrowPatch((0.325, 0.51), (0.39, 0.51), **solid))
-    ax.add_patch(FancyArrowPatch((0.635, 0.51), (0.695, 0.51), **dashed))
-    ax.text(0.665, 0.60, "forecast", ha='center', va='bottom', fontsize=6.0, style='italic')
+    # Inputs
+    weather = (0.025, 0.66, 0.28, 0.17)
+    labels = (0.025, 0.36, 0.28, 0.17)
+    box(*weather, "91-day weather\nwindow\n16 daily features", '#eaf2fb')
+    box(*labels, "Historical train\nscores\ntrain.csv labels", '#f7ead7')
 
-    # five weekly forecast markers above the output box
-    for i in range(5):
-        ax.plot(0.735 + i * 0.052, 0.81, marker='o', markersize=2.6, color='#2a7a3a')
+    # Predictor legs
+    leg_x, leg_w, leg_h = 0.385, 0.29, 0.125
+    legs = [
+        (0.78, "GBDT anchor\n1071 features", '#eef2ff'),
+        (0.60, "Lag-2215\nseasonal lookup", '#fff0d6'),
+        (0.42, "1-D CNN\nweather sequence", '#e8f7ef'),
+        (0.24, "SSL Transformer\nweather pretrain", '#f0e8ff'),
+    ]
+    for y, text, color in legs:
+        box(leg_x, y, leg_w, leg_h, text, color, fs=6.45)
 
-    ax.text(0.5, 0.115, "per region (R = 2,248);  trained with a leakage-safe time split",
-            ha='center', va='center', fontsize=6.3, color='#555555')
+    # Blend and output
+    blend = (0.735, 0.50, 0.235, 0.18)
+    out = (0.735, 0.18, 0.235, 0.17)
+    box(*blend, "Weighted blend\n+\naffine/clip", '#fdf2f8', fs=6.55, weight='bold')
+    box(*out, "Next 5 weekly\nseverity scores\n0-5", '#e7f5ea', fs=6.65)
 
-    save_ieee_figure(fig, 'fig_overview.pdf', IEEE_SINGLE_COL_INCH)
+    # Route weather to weather-driven legs, labels to the seasonal lag leg.
+    weather_right = (weather[0] + weather[2], weather[1] + weather[3] / 2)
+    labels_right = (labels[0] + labels[2], labels[1] + labels[3] / 2)
+    for idx, (y, _, _) in enumerate(legs):
+        leg_left = (leg_x, y + leg_h / 2)
+        if idx == 1:
+            arrow(labels_right, leg_left, rad=-0.03)
+        else:
+            arrow(weather_right, leg_left, rad=0.04 if idx == 0 else -0.04)
+
+    for y, _, _ in legs:
+        arrow((leg_x + leg_w, y + leg_h / 2), (blend[0], blend[1] + blend[3] / 2), rad=0.05)
+    arrow((blend[0] + blend[2] / 2, blend[1]), (out[0] + out[2] / 2, out[1] + out[3]), rad=0.0)
+
+    # Forecast markers make the five-output target visible without adding text.
+    marker_x = np.linspace(out[0] + 0.035, out[0] + out[2] - 0.035, 5)
+    for x in marker_x:
+        ax.plot(x, out[1] - 0.030, marker='o', markersize=2.3, color='#2f7d45', clip_on=False)
+
+    ax.text(0.50, 0.055, "per region (R = 2,248); leakage-safe time split",
+            ha='center', va='center', fontsize=6.0, color='#4b5563')
+
+    out_path = FIG_DIR / 'fig_overview.pdf'
+    fig.set_size_inches(IEEE_SINGLE_COL_INCH, 2.15)
+    fig.savefig(out_path, dpi=IEEE_DPI)
+    plt.close(fig)
+    print(f"  [IEEE] Saved fig_overview.pdf at {IEEE_SINGLE_COL_INCH}\" width, fixed canvas")
 
 
 def create_fig1_periodicity():

@@ -337,3 +337,18 @@ Scope of each iteration is set by the approved plan at `~/.claude/plans/system-i
 - 🔴 GitHub repo `https://github.com/RaisoLiu/dm-114-final-project` still needs to be created public + remote commits pushed.
 - ✅ Kaggle Display Name `Team 3` confirmed (iter6); ✅ two Kaggle selected submissions confirmed (iter8).
 - ⚠️ ~80 experiment scripts referenced by the report still untracked on remote git tree.
+
+---
+
+## Iteration 12 — 2026-05-26  (user redrew Figure 1 + references no longer on their own page)
+
+### What changed
+- **Figure 1 redrawn by user**: create_fig_overview() rewritten as a single-column "Method architecture" diagram — two inputs (91-day weather window; historical train.csv scores) → four predictor legs (GBDT anchor 1071-feat, Lag-2215 seasonal lookup, 1-D CNN, SSL Transformer) → weighted blend + affine/clip → next 5 weekly severity scores. Weather routes to the 3 weather-driven legs; historical scores route to the lag leg. Caption updated to "Method architecture". (User-authored; synced from local.)
+- **References no longer forced to their own page**: removed the \clearpage before the bibliography (added in iter9, now reverted per user). References flow directly after the Conclusion. Page count drops 8 → 7.
+- Verified on remote: `make check` ✓, `make verify-submission` ✓ (max abs diff 4.4e-16), 7 pages A4, page numbers intact, references render on page 7 with content.
+- iter12 PDF snapshot: `reports/DM_project_Group_3_iter12.pdf`.
+
+### Outstanding human-only blockers (unchanged)
+- 🔴 GitHub repo `https://github.com/RaisoLiu/dm-114-final-project` still needs to be created public + remote commits pushed.
+- ✅ Kaggle Display Name `Team 3` confirmed (iter6); ✅ two Kaggle selected submissions confirmed (iter8).
+- ⚠️ ~80 experiment scripts referenced by the report still untracked on remote git tree.

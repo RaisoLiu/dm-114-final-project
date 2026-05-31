@@ -43,12 +43,12 @@ The dataset contains $2{,}248$ regions, each with $5{,}480$ days of daily meteor
 Random train/validation splits are inappropriate here because the drought scores exhibit strong temporal autocorrelation (mean per-region lag-7 autocorrelation $> 0.7$) and multi-year seasonality (Section~\ref{sec:periodicity}); such splits let future information leak through nearby observations. We therefore adopt a leakage-safe, time-based validation scheme that respects both the 91-day input window and the public-leaderboard slice's position within the 6-year drought cycle.
 
 \subsection{High-level method}
-Figure~\ref{fig:overview} summarises the task and data flow. Our final solution combines four complementary predictors: a GBDT anchor, a seasonal lag-2215 autoregressive baseline, a weather-only dilated 1-D CNN, and an SSL-pretrained Transformer. The lag-2215 component captures the observed $\approx$6-year drought cycle using only the historical training labels in \texttt{train.csv} (no test labels, no external labels, no external data), while the CNN and Transformer learn weather-driven patterns without score inputs. The final prediction is obtained through weighted blending and a public-slice affine-and-clip calibration, achieving a public-leaderboard MAE of $0.7628$. An iter4 re-audit of the per-leg residual correlations (Section~\ref{sec:ortho}) shows family diversity, rather than any single low-correlation leg, drives the blend gain.
+Figure~\ref{fig:overview} summarises the method architecture. Our final solution combines four complementary predictors: a GBDT anchor, a seasonal lag-2215 autoregressive baseline, a weather-only dilated 1-D CNN, and an SSL-pretrained Transformer. The lag-2215 component captures the observed $\approx$6-year drought cycle using only the historical training labels in \texttt{train.csv} (no test labels, no external labels, no external data), while the CNN and Transformer learn weather-driven patterns without score inputs. The final prediction is obtained through weighted blending and a public-slice affine-and-clip calibration, achieving a public-leaderboard MAE of $0.7628$. An iter4 re-audit of the per-leg residual correlations (Section~\ref{sec:ortho}) shows family diversity, rather than any single low-correlation leg, drives the blend gain.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/fig_overview.pdf}
-\caption{Task and data flow. For each region, a 91-day weather-only window (16 daily meteorological features) is mapped by a heterogeneous-ensemble model to the next five weekly drought-severity scores ($0$--$5$). Models are trained with a leakage-safe time split; the forecast horizon (dashed) contains no observed scores.}
+\caption{Method architecture. The 91-day weather window feeds the GBDT anchor, 1-D CNN, and SSL Transformer legs, while historical \texttt{train.csv} scores feed the lag-2215 seasonal lookup. The four predictors are combined by weighted blending and affine-and-clip calibration to produce the next five weekly drought-severity scores ($0$--$5$).}
 \label{fig:overview}
 \end{figure}
 
@@ -344,8 +344,6 @@ The uploaded artefact basename \path{submission_phd_below075_20260522.csv} lives
 
 \subsection{Conclusion}
 We presented Team~3's final solution to the DM~114 drought-severity forecasting task: a four-component blend of a GBDT weather anchor, a seasonal lag-2215 autoregressive baseline, a weather-only dilated 1-D CNN, and an SSL-pretrained Transformer, combined under a public-slice affine-and-clip calibration. The submission reaches a public-leaderboard MAE of $0.7628$, a 10.6\% relative improvement over the prior team ceiling of $0.8534$, and the controlled OOF-aligned ablation (Table~\ref{tab:t5}) attributes the gain to complementary signal families rather than any single leg. We were deliberately explicit about the limits of this result: the affine-and-clip step is a public-slice calibration carrying real private-leaderboard risk, so the two Kaggle-selected submissions pair the aggressive $0.7628$ artefact with a conservative no-affine sibling ($0.7952$). The full submission is reproducible from cached predictions via \texttt{make phd-below075} and byte-verifiable with \texttt{make verify-submission}. Future work is per-region failure-mode analysis and a fresh end-to-end retraining that removes the cached-artefact dependency.
-
-\clearpage
 
 \bibliographystyle{IEEEtran}
 \begin{thebibliography}{00}

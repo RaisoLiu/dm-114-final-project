@@ -3,7 +3,7 @@
 This manifest records the artefacts needed to audit the reported final submission and PDF.
 The final submission path is a cached-prediction re-blend, not a full retraining of every historical model.
 
-Generated: 2026-05-31 12:45:33 UTC
+Generated: 2026-05-31 13:01:01 UTC
 
 | Path | Role | Size bytes | SHA256 | Produced by | Consumed by |
 |---|---|---:|---|---|---|
@@ -12,14 +12,14 @@ Generated: 2026-05-31 12:45:33 UTC
 | `reports/oof_tensor.csv` | Aligned OOF predictions for retained GBDT legs | 4166125 | `2f5ed136f8106dc79222d636b37bd697bdedec5e4df5744a036419645158ed96` | scripts/build_oof_tensor.py / retained experiment cache | Table III and Fig. 3 |
 | `reports/_local_eval_gate_report.csv` | 32-row public upload ledger and calibration-gate source | 72317 | `2fe0767025259be39ab6078a59ecb4215f1c413349604a8799ea0890abc0f8ab` | scripts/local_eval_gate.py / Kaggle history audit | Table IV and Fig. 2 |
 | `reports/_track2_fft_peaks.csv` | Per-region FFT peak summary for periodicity analysis | 326664 | `51839f77a03c41055d96a18f5e154a844bee947632d8cdf4d14111c08d26e049` | scripts/track2_phase_eda.py | Fig. 1 |
-| `reports/data_characteristics_v1.md` | Dataset statistics and retained 5-fold rho summary | 5454 | `b5dc11a126706cdeca127ea663cf9d60c3b1dbb1cb805f5443c87332ac18ae0d` | scripts/analyze_data_distribution.py --emit-menu | Table I and orthogonality wording |
-| `report/figures/generate_figures.py` | Report figure generator | 16939 | `6aa09b27f5f4f881fece2ef266ff3b9db01a016ff62c5204e3a9d6398f11abf6` | manual report code | cd report && make |
-| `report/figures/fig1_periodicity.pdf` | Periodicity figure | 18263 | `669f7272a682d7366c424fd62ec3503566859b80da84704d7f78902add7e9daa` | report/figures/generate_figures.py | report/DM_project_Group_3.tex |
-| `report/figures/fig2_slope.pdf` | Public-ledger slope trend figure | 18521 | `fa2c3fe8ee097f8d92b6ede1f5fed20136a3fbf35c3bfce7a1514c5dafdc5169` | report/figures/generate_figures.py | report/DM_project_Group_3.tex |
-| `report/figures/fig3_orthogonality.pdf` | OOF residual correlation figure | 15519 | `ad65ccbc45315c60975eac4ea4672b07e1b50cc24fba603b6704e6112c6a1c8b` | report/figures/generate_figures.py | report/DM_project_Group_3.tex |
-| `report/figures/fig4_cv_generalization.pdf` | 5-fold CV diagnostic figure | 107674 | `80d3bcfb0bb75af74ed4d7f8b2b97b1d4e3d7ee92a5fe8dd705b9bc03bc815b6` | reports/plots/cv*.png via report/figures/generate_figures.py | report/DM_project_Group_3.tex |
-| `report/figures/fig5_trajectory.pdf` | Public submission trajectory figure | 18790 | `0d91252b786b5a561ead5baeda07bffdefbe2f79628556f51cda21b1a3be6b26` | report/figures/generate_figures.py | report/DM_project_Group_3.tex |
-| `report/DM_project_Group_3.pdf` | Canonical final report PDF | 296529 | `18b9050ef5f810ab3a63ec4124f9fc0ae91acd6a6256dd144a0cefaa7b862f64` | cd report && make | course submission |
+| `reports/data_characteristics_v1.md` | Dataset statistics and retained 5-fold rho summary | 5454 | `e5579d1deb0705e64f943985f3b4428b340dd11212e74b4fb9b4054a8a0d3032` | scripts/analyze_data_distribution.py --emit-menu | Table I and orthogonality wording |
+| `report/figures/generate_figures.py` | Report figure generator | 18440 | `9e2f28d824a1ab730c049972a14827b7371ead41ec05a44fb0fa4671f1ed2da5` | manual report code | cd report && make |
+| `report/figures/fig1_periodicity.pdf` | Periodicity figure | 18263 | `726601d2e12f2081f7839b313e92ee8cfbede4d2a74844e84bb48ca39753393a` | report/figures/generate_figures.py | report/DM_project_Group_3.tex |
+| `report/figures/fig2_slope.pdf` | Public-ledger slope trend figure | 18521 | `617ef064f6e5f1fc3762b2be446ba2dccc4a9bc0e6eef6450a22b48d08125f1b` | report/figures/generate_figures.py | report/DM_project_Group_3.tex |
+| `report/figures/fig3_orthogonality.pdf` | OOF residual correlation figure | 15519 | `3d9757900459621e293fb687711848e14d28bdbc4580346310df51cb642afa9c` | report/figures/generate_figures.py | report/DM_project_Group_3.tex |
+| `report/figures/fig4_cv_generalization.pdf` | 5-fold CV diagnostic figure | 107674 | `776df5bc814449ec267d80e4831b19fc424160bec1a6217fbfbfe74cdd5a121c` | reports/plots/cv*.png via report/figures/generate_figures.py | report/DM_project_Group_3.tex |
+| `report/figures/fig5_trajectory.pdf` | Public submission trajectory figure | 18790 | `402d660e45590d37e9d04ba15ada8ca3fdcc5123e4ac66a8f5b87185b40c177c` | report/figures/generate_figures.py | report/DM_project_Group_3.tex |
+| `report/DM_project_Group_3.pdf` | Canonical final report PDF | 301250 | `0c7ea1cb1d5a0a3863db32f904f7cd05eea19bbd4eae672d3f6a08fcdd4f168e` | cd report && make | course submission |
 
 ## Verification
 

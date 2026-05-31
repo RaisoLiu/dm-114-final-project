@@ -13,8 +13,19 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error
 
-from drought.features import DATE_COL, REGION_COL, TARGET_COL, date_dayofweek, date_dayofyear, date_ordinal
+from drought.features import (
+    DATE_COL,
+    REGION_COL,
+    TARGET_COL,
+    cycle_phase_parts,
+    date_dayofweek,
+    date_dayofyear,
+    date_ordinal,
+)
 from train_predict import format_submission
+
+# Cycle period from ACF analysis (reports/data_insights.json["periodicity"]["best_P"])
+CYCLE_PERIOD = 2184
 
 
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
@@ -190,6 +201,7 @@ def date_features(date_value: str) -> list[float]:
     year, month, day = date_parts(date_value)
     doy = date_dayofyear(date_value)
     dow = date_dayofweek(date_value)
+    cp = cycle_phase_parts(date_value, period=CYCLE_PERIOD)
     return [
         float(month),
         float((month - 1) // 3 + 1),
@@ -203,6 +215,11 @@ def date_features(date_value: str) -> list[float]:
         float(np.sin(2 * np.pi * dow / 7.0)),
         float(np.cos(2 * np.pi * dow / 7.0)),
         float(year % 4),
+        # Cycle-phase features (P=2184d from ACF; see reports/data_insights.json)
+        cp["cycle_phase"],
+        cp["cycle_phase_sin"],
+        cp["cycle_phase_cos"],
+        cp["cycle_phase_ordinal"],
     ]
 
 

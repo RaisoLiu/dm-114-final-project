@@ -42,3 +42,21 @@ venv/
 # Claude Code session artifacts
 .claude/
 .gstack/
+
+# --- artifact exclusions (added when publishing source to GitHub) ---
+# LaTeX build artifacts (regenerable)
+report/*.aux
+report/*.log
+report/*.out
+# Figure PNG renders (the .pdf figures are canonical)
+report/figures/*.png
+# Report numeric/binary artifacts + old iteration PDFs (report/ holds the canonical PDF)
+reports/*.npy
+reports/*.pkl
+reports/*.pdf
+reports/plots/
+# Large model checkpoints / external data / preview scratch
+checkpoints/
+chronos-2-finetuned/
+data/external/
+preview/

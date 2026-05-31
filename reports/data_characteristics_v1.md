@@ -1,6 +1,6 @@
 # DM 114 Data Distribution Characteristics (PhD Analysis v1)
 
-**Generated**: 2026-05-25T11:03:03.453766Z  
+**Generated**: 2026-05-31T12:59:52.122519Z  
 **Mode**: synthesis_from_existing_experiments  
 **Public target mean (all-zero submission)**: **1.2088**
 

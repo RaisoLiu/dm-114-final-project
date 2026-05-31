@@ -26,8 +26,9 @@
 | E12 | v7 U1 | DOY blend w08 | per-region DOY-cycle 訊號 × 8% + ext150 × 92% | 0.8848 | slope +0.48；DOY family 關閉 |
 | E13 | v7 U2 | H2 Recent-Zero Mask α=0.20 | 對 576 個「最近 12 score 全 0 且 ext150_avg>1」的 region 把 ext150 壓低 20% | 0.8919 | slope +0.42；adversarial-val MAE 跌 0.031 但 public 漲 0.039 |
 | E14 | v7 U3 | （同 E10） | （重新上傳作為 v7 portfolio 第 3 leg） | 0.8853 | 補做 v6 family 的 Kaggle datapoint |
+| E15 | v17 | **External-data deanonymization** | climate fingerprint kNN + 91-day weather Pearson → 對應 cdminix US-drought dataset 的 FIPS county × 2019/2020；直接查 USDM 5-週後的真實 score | 0.1866（**排除**） | 2026-05-21 已上傳一次驗證 validation MAE 0.0951 確實 transfer 到 public 0.1866，但同日 team 決議此方法不正當，**不採用為最終結果**；Kaggle 無法刪除 submission，將於 deadline 前手動取消 private LB 的 selection。E15 不計入 team result，team best 維持為 E1 ext150 = 0.8534。 |
 
-合計 13 種結構不同的方法（E14 是 E10 重傳），**沒有任何一個低於 0.8534**。
+合計 15 種結構不同的方法（E14 是 E10 重傳；E15 後被排除）。**E1–E14 中 ext150 仍為最低的 0.8534**；E15 的 0.1866 為一次性 verification upload，已決議不採用。
 
 ---
 

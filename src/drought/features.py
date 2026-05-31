@@ -29,6 +29,7 @@ class FeatureConfig:
     dry_threshold: float = 1e-6
     anchor_mode: str = "score_days"
     anchor_stride: int = 7
+    cycle_period: int = 2184  # 6.0 yr — from data_characteristics_v1.md ACF analysis
 
 
 def safe_name(value: object) -> str:
@@ -99,6 +100,24 @@ def date_feature_parts(value: object) -> dict[str, float]:
 
 def date_ordinals(values: pd.Series) -> pd.Series:
     return values.map(date_ordinal).astype("int64")
+
+
+def cycle_phase_parts(value: object, period: int = 2184) -> dict[str, float]:
+    """Return cycle phase features for the ~6-year synthetic drought periodicity.
+
+    The dominant period P=2184 was identified by ACF on weekly score series
+    (see reports/data_characteristics_v1.md). These features let every model
+    (GBDT, lag residual, deep) know *where in the cycle* the current window sits,
+    directly addressing the public target mean = 1.2088 high-severity plateau.
+    """
+    ordinal = date_ordinal(value)
+    phase = (ordinal % period) / float(period)
+    return {
+        "cycle_phase": float(phase),
+        "cycle_phase_sin": float(math.sin(2.0 * math.pi * phase)),
+        "cycle_phase_cos": float(math.cos(2.0 * math.pi * phase)),
+        "cycle_phase_ordinal": float(ordinal % period),
+    }
 
 
 def load_frame(path: str | bytes | "os.PathLike[str]") -> pd.DataFrame:
@@ -229,6 +248,13 @@ def make_window_features(
     features["end_month_cos"] = math.cos(2.0 * math.pi * date_parts["month"] / 12.0)
     features["end_doy_sin"] = math.sin(2.0 * math.pi * date_parts["dayofyear"] / 366.0)
     features["end_doy_cos"] = math.cos(2.0 * math.pi * date_parts["dayofyear"] / 366.0)
+
+    # Cycle-phase features (PhD redesign — driven by ACF peak at 2184 d)
+    cp = cycle_phase_parts(end_date, period=getattr(config, "cycle_period", 2184))
+    features["cycle_phase"] = cp["cycle_phase"]
+    features["cycle_phase_sin"] = cp["cycle_phase_sin"]
+    features["cycle_phase_cos"] = cp["cycle_phase_cos"]
+    features["cycle_phase_ordinal"] = cp["cycle_phase_ordinal"]
 
     precip_cols = set(detect_precipitation_columns(numeric_cols))
     for col in numeric_cols:

@@ -277,3 +277,29 @@ Scope of each iteration is set by the approved plan at `~/.claude/plans/system-i
 - ✅ Kaggle Display Name = `Team 3` confirmed (iter6 screenshot evidence).
 - ✅ Kaggle two final-selected submissions confirmed by user as 0.7628 + 0.7952.
 - ⚠️ ~80 experiment scripts referenced by the report still untracked on remote git tree.
+
+---
+
+## Iteration 9 — 2026-05-26  (correction memo + name fix + page numbers)
+
+### What changed (per user correction memo `review/iter6_correction_memo.md`)
+- **Page numbers added**: `\thispagestyle{plain}\pagestyle{plain}` after \maketitle. IEEEtran conference suppresses page numbers by default; now centered at bottom of every page incl. page 1. Verified rendered.
+- **Name romanization fix**: 413551038 "Tung-Hao Chang" → "Tong-Hou Cheong" (author block; the Author Contributions section was removed this round so only the page-1 block carries names). Yu-Shun Liu (413551030) and Kuan-Fu Chen (414551017) unchanged per user (only one correction supplied).
+- **Abstract simplified**: replaced the detail-heavy two-paragraph abstract with a cleaner single paragraph (memo: "細節似乎不需要提到這麼多"). ρ values + A/B/C/D weights removed from abstract (they remain in §High-level method, §Cross-family residual diversity, Threats). GitHub URL + make phd-below075/verify-submission repro hook retained for spec p.18 compliance.
+- **§A Task simplified**, **§B "Why random splits fail" → "Validation Strategy"**, **§C High-level method simplified** (memo rewrites adopted; detailed dataset stats remain in §Dataset statistics).
+- **Related Work: dropped 2 unused references** (memo: "沒有用得到應該不用寫入") — Chronos and TFT were cited only in Related Work prose; verified no dangling \cite elsewhere. Bibliography now 5 refs (LightGBM, WaveNet, Kechyn-WaveNet, USDM, Efron), renumbered [1]-[5] automatically.
+- **Added \section{Conclusion}** (memo: "補Conclusion") — concise 5-sentence summary before References.
+- **Removed Author Contributions section** (memo: "Author contribution好像不會放"; user confirmed removal). Names remain in page-1 author block.
+- **References forced to own page** (user decision): \clearpage before bibliography → references start fresh on page 8.
+- iter9 PDF snapshot: `reports/DM_project_Group_3_iter9.pdf`.
+- 8 pages total (7 content + 1 references page; content ex-refs within spec 5-8). `make check` ✓, `make verify-submission` ✓ (max abs diff 4.4e-16).
+
+### Pushbacks / modifications
+- **Abstract**: memo's simplified version dropped the GitHub URL; I kept the simpler prose but re-appended the GitHub-link + repro sentence because spec p.18 requires group ID + GitHub link in the abstract.
+- **"reference 就可以自己一頁"**: interpreted as the user's preference for a dedicated references page → implemented via \clearpage (user confirmed).
+
+### Outstanding human-only blockers
+- 🔴 GitHub repo `https://github.com/RaisoLiu/dm-114-final-project` still needs to be created public + remote commits pushed.
+- ✅ Kaggle Display Name `Team 3` confirmed (iter6 screenshot).
+- ✅ Kaggle two selected submissions confirmed (iter8).
+- ⚠️ ~80 experiment scripts referenced by the report still untracked on remote git tree.

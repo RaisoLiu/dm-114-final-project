@@ -318,3 +318,22 @@ Scope of each iteration is set by the approved plan at `~/.claude/plans/system-i
 - 🔴 GitHub repo `https://github.com/RaisoLiu/dm-114-final-project` still needs to be created public + remote commits pushed.
 - ✅ Kaggle Display Name `Team 3` confirmed (iter6); ✅ two Kaggle selected submissions confirmed (iter8).
 - ⚠️ ~80 experiment scripts referenced by the report still untracked on remote git tree.
+
+---
+
+## Iteration 11 — 2026-05-26  (4 top-level sections + Project-Summary schematic + new title)
+
+### What changed (user request)
+- **New title**: "Leveraging a Six-Year Seasonal Cycle and a Heterogeneous Ensemble for Drought-Severity Forecasting" (dropped the "(DM 114 Kaggle)" suffix per user).
+- **Restructured to exactly 4 top-level sections** (matches spec p.18 content list): Abstract (unnumbered), I. Project Summary, II. Proposed Method, III. Experiments. Folded by pure heading-level demotion (no content moved):
+  - Related Work: \section → \subsection (now under Project Summary, per spec "introduce related works").
+  - Reproducibility: \section → \subsection under Experiments; its 3 children (Environment, Single-command re-blend, Build of report) → \subsubsection.
+  - Limitations + Conclusion: \section → \subsection under Experiments.
+- **Added Figure 1**: task/data-flow schematic in Project Summary (matplotlib create_fig_overview() in generate_figures.py): 91-day weather window → heterogeneous-ensemble model → next 5 weekly severity scores (0-5), with dashed forecast-gap cue + 5 weekly markers. Single-column. User chose task/data-flow (problem-setup) over method-pipeline.
+- Figure renumbering automatic (schematic = Fig 1, others shift +1); all cross-refs use \ref, no `??` in PDF, no undefined-reference warnings.
+- iter11 PDF snapshot: `reports/DM_project_Group_3_iter11.pdf`. `make check` ✓, `make verify-submission` ✓ (max abs diff 4.4e-16), 8 pages A4 (page numbers + refs-own-page intact).
+
+### Outstanding human-only blockers (unchanged)
+- 🔴 GitHub repo `https://github.com/RaisoLiu/dm-114-final-project` still needs to be created public + remote commits pushed.
+- ✅ Kaggle Display Name `Team 3` confirmed (iter6); ✅ two Kaggle selected submissions confirmed (iter8).
+- ⚠️ ~80 experiment scripts referenced by the report still untracked on remote git tree.

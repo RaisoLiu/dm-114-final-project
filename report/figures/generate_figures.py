@@ -196,11 +196,55 @@ def main():
     print("\n[4/5] Generating Fig 1 (Periodicity from real data)...")
     create_fig1_periodicity()
 
-    print("\n[5/5] Generating Fig 2 (Slope Law from real data)...")
+    print("\n[5/6] Generating Fig 2 (Slope Law from real data)...")
     create_fig2_slope()
+
+    print("\n[6/6] Generating Fig overview (task/data-flow schematic)...")
+    create_fig_overview()
 
     print("\n[OK] All figures generated with IEEE sizing contract enforced.")
     print("  Next: Rebuild PDF with width=\\columnwidth includes.")
+
+
+def create_fig_overview():
+    """Task/data-flow schematic for the Project Summary (problem setup):
+    91-day weather window -> heterogeneous-ensemble model -> next 5 weekly
+    drought-severity scores. Single-column, horizontal flow."""
+    from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+
+    set_ieee_figure_style(IEEE_SINGLE_COL_INCH)
+    fig, ax = plt.subplots(figsize=(IEEE_SINGLE_COL_INCH, IEEE_SINGLE_COL_INCH * 0.50))
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis('off')
+
+    def box(x, y, w, h, text, fc):
+        patch = FancyBboxPatch(
+            (x, y), w, h, boxstyle="round,pad=0.012",
+            linewidth=0.9, edgecolor='#333333', facecolor=fc,
+        )
+        ax.add_patch(patch)
+        ax.text(x + w / 2, y + h / 2, text, ha='center', va='center', fontsize=7.2)
+
+    # Input -> Model -> Output
+    box(0.015, 0.30, 0.30, 0.42, "91-day weather\nwindow\n(16 daily features)", '#eaf2fb')
+    box(0.395, 0.30, 0.23, 0.42, "Model\n(heterogeneous\nensemble)", '#fbeee0')
+    box(0.70, 0.30, 0.29, 0.42, "Next 5 weekly\nseverity scores\n(0-5)", '#e8f6ec')
+
+    solid = dict(arrowstyle='-|>', mutation_scale=9, linewidth=1.0, color='#333333')
+    dashed = dict(arrowstyle='-|>', mutation_scale=9, linewidth=1.0, color='#333333', linestyle=(0, (3, 2)))
+    ax.add_patch(FancyArrowPatch((0.325, 0.51), (0.39, 0.51), **solid))
+    ax.add_patch(FancyArrowPatch((0.635, 0.51), (0.695, 0.51), **dashed))
+    ax.text(0.665, 0.60, "forecast", ha='center', va='bottom', fontsize=6.0, style='italic')
+
+    # five weekly forecast markers above the output box
+    for i in range(5):
+        ax.plot(0.735 + i * 0.052, 0.81, marker='o', markersize=2.6, color='#2a7a3a')
+
+    ax.text(0.5, 0.115, "per region (R = 2,248);  trained with a leakage-safe time split",
+            ha='center', va='center', fontsize=6.3, color='#555555')
+
+    save_ieee_figure(fig, 'fig_overview.pdf', IEEE_SINGLE_COL_INCH)
 
 
 def create_fig1_periodicity():
